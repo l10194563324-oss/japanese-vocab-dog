@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MZ.Edu 日语高频词汇与艾宾浩斯精算系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: -apple-system, "PingFang SC", "Hiragino Sans", "Yu Gothic", sans-serif; background-color: #FBFBFA; color: #111111; }
+        input, select, textarea { background-color: #FAFAFA; border: 1px solid #E5E5E3 !important; transition: all 0.15s ease; }
+        input:focus, select:focus, textarea:focus { border-color: #111111 !important; background-color: #FFF; outline: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* 🔒 安全锁拦截遮罩 */
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #FBFBFA; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        #appContainer { display: none; }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex justify-center items-start">
+
+    <div id="authOverlay">
+        <div class="w-full max-w-sm p-8 bg-white rounded-xl border border-[#E5E5E3] shadow-lg text-center space-y-5">
+            <div class="flex flex-col items-center">
+                <div class="w-8 h-0.5 bg-[#111] mb-3"></div>
+                <h3 class="text-sm font-black tracking-widest uppercase text-gray-800">NIHONGO LOCK / 日语看门狗</h3>
+                <p class="text-[11px] text-gray-400 mt-1">请输入 MZ.Edu 系统授权密码以解锁词库</p>
+            </div>
+            <div class="space-y-3">
+                <input type="password" id="passInput" placeholder="输入授权密码" class="w-full p-3 rounded-lg text-xs text-center font-bold tracking-widest" onkeydown="if(event.keyCode==13) verifyPassword()">
+                <button onclick="verifyPassword()" class="w-full bg-[#111111] text-white p-2.5 rounded-lg text-xs font-bold tracking-wider cursor-pointer hover:bg-[#333] transition">
+                    验证并解锁本地词库
+                </button>
+            </div>
+            <p id="errorHint" class="text-[10px] text-red-600 font-bold opacity-0 transition-opacity">❌ 授权密码错误，请重新输入</p>
+        </div>
+    </div>
+
+    <div id="appContainer" class="w-full max-w-7xl flex flex-col gap-8">
+        
+        <div class="bg-white p-6 md:p-8 rounded-xl border border-[#E5E5E3] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <div class="w-12 h-0.5 bg-[#111] mb-2"></div>
+                <h3 class="text-lg font-bold text-[#111] tracking-wider">MZ.Style // 艾宾浩斯记忆看门狗 (JLPT N5-N2)</h3>
+                <p class="text-[11px] text-[#A0A09C] mt-1">纯本地存储技术：数据绝不上传。根据遗忘曲线自动精确锁定今日到期错题。</p>
+            </div>
+            <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-[#EEE] w-full md:w-auto font-serif">
+                <div class="text-center md:text-left">
+                    <span class="block text-[10px] font-bold text-red-500 tracking-wider mb-1 uppercase">🚨 今日截止需复习</span>
+                    <span class="text-4xl font-black tracking-tighter text-red-600" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-gray-400">词</span>
+                </div>
+                <div class="text-center md:text-left border-l border-gray-200 pl-8">
+                    <span class="block text-[10px] font-bold text-gray-400 tracking-wider mb-1 uppercase">📦 词库总储备</span>
+                    <span class="text-4xl font-black tracking-tighter text-gray-800" id="totalCount">0</span><span class="text-xs font-bold ml-1 text-gray-400">词</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                
+                <div class="bg-white p-6 rounded-xl border border-[#E5E5E3] shadow-sm space-y-4">
+                    <span class="text-xs font-black tracking-widest text-[#111] uppercase block border-b border-[#EEE] pb-2">01 / INPUT NEW VOCAB (录入生词/错题)</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-400 mb-1">日语汉字/词汇</label>
+                            <input type="text" id="vWord" placeholder="例: にともなって" class="w-full p-2 rounded text-xs font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 mb-1">JLPT级别</label>
+                            <select id="vLevel" class="w-full p-2 rounded text-xs font-bold">
+                                <option value="N2">N2 核心</option><option value="N3" selected>N3 核心</option><option value="N4">N4 核心</option><option value="N5">N5 基础</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1">振假名注音 (可不填)</label>
+                        <input type="text" id="vFurigana" placeholder="例: 伴って" class="w-full p-2 rounded text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1">中文核心释义</label>
+                        <input type="text" id="vMeaning" placeholder="例: 随着...、伴随着..." class="w-full p-2 rounded text-xs font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1">典型例句 / 听抄出处备注说明</label>
+                        <textarea id="vMemo" rows="2" placeholder="输入你在YouTube听抄或者做题碰到的上下文场景..." class="w-full p-2 rounded text-xs"></textarea>
+                    </div>
+                    <button onclick="saveNewVocab()" class="w-full text-xs font-black tracking-widest py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition cursor-pointer">
+                        📥 安全存入本地艾宾浩斯词库
+                    </button>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-[#E5E5E3] shadow-sm text-xs space-y-3">
+                    <span class="text-xs font-black tracking-widest text-gray-400 uppercase block">数据安全防丢备用网</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportBackupData()" class="p-2 border border-dashed rounded text-center font-bold hover:bg-gray-50 cursor-pointer">
+                            📤 备份导出词库文件
+                        </button>
+                        <label class="p-2 border border-dashed rounded text-center font-bold hover:bg-gray-50 cursor-pointer block">
+                            📥 导入恢复词库文件
+                            <input type="file" id="importFile" class="hidden" onchange="importBackupData(this)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 bg-white p-6 rounded-xl border border-[#E5E5E3] shadow-sm flex flex-col min-h-[480px]">
+                <div class="border-b border-[#EEEEEE] pb-3 mb-6 flex justify-between items-center">
+                    <span class="text-xs font-black tracking-widest text-[#111] uppercase">02 / MEMORY SHUTTLE COCKPIT (智能刷题舱)</span>
+                    <span class="text-[10px] font-mono text-gray-400" id="cardIndexText">0 / 0</span>
+                </div>
+
+                <div id="cardCockpit" class="flex-1 flex flex-col justify-between space-y-8">
+                    <div id="emptyState" class="text-center py-20 italic text-gray-400 text-xs hidden">
+                        🎉 太棒了！今日截止的所有艾宾浩斯复习任务已全部通关清零！
+                    </div>
+
+                    <div id="activeCard" class="space-y-6 flex-1 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">N3</span>
+                            <h1 id="cardWord" class="text-4xl font-black font-serif tracking-wide text-gray-900 pt-2">にともなって</h1>
+                        </div>
+
+                        <div id="hiddenZone" class="bg-gray-50 border border-gray-100 p-4 rounded-xl space-y-3 opacity-100 transition-opacity">
+                            <div class="blur-md pointer-events-none select-none transition-all duration-300" id="blurWrapper">
+                                <div class="text-xs text-gray-400">振假名汉字：<b id="cardFurigana" class="text-gray-800 text-sm pl-1">伴って</b></div>
+                                <div class="text-xs text-gray-400 mt-2">核心释义：<b id="cardMeaning" class="text-emerald-800 text-base pl-1">随着...</b></div>
+                                <div class="text-xs text-gray-400 mt-2 border-t border-gray-200/60 pt-2">场景听抄例句：<p id="cardMemo" class="text-gray-600 font-sans mt-1 italic"></p></div>
+                            </div>
+                            <div id="triggerBtnBox" class="text-center py-4">
+                                <button onclick="revealCard()" id="revealBtn" class="px-6 py-2 bg-gray-800 text-white font-bold text-xs rounded-full hover:bg-black transition cursor-pointer shadow-sm">
+                                    👁️ 脑补完毕，点击显现答案
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="decisionBox" class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 hidden">
+                            <button onclick="handleDecision(false)" class="py-3 bg-red-50 text-red-700 rounded-lg text-xs font-bold border border-red-200 hover:bg-red-100 transition cursor-pointer text-center">
+                                ❌ 没想起来 / 记错了 (重回低阶循环)
+                            </button>
+                            <button onclick="handleDecision(true)" class="py-3 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition cursor-pointer text-center shadow-sm">
+                                    キツネ 记住了！(晋级下一阶段)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 🔒 安全拦截密码
+        const CORRECT_PASSWORD = "MZ666"; 
+
+        function verifyPassword() {
+            if(document.getElementById('passInput').value === CORRECT_PASSWORD) {
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                initVocabEngine(); // 初始化调取本地词库
+            } else {
+                document.getElementById('errorHint').style.opacity = '1';
+                document.getElementById('passInput').value = '';
+            }
+        }
+
+        // 🧠 艾宾浩斯德国标准遗忘周期表（单位：小时）
+        // 阶段：0(刚录入), 1(1小时), 2(1天/24h), 3(3天/72h), 4(7天/168h), 5(15天/360h), 6(已彻底记住通关)
+        const EBBINGHAUS_INTERVALS = [0, 1, 24, 72, 168, 360];
+
+        let localVocabDB = []; // 全局内存词库数组
+        let dueCardsPool = []; // 今日到期需复习卡片池
+        let currentIndex = 0;  // 当前正在刷的卡片指针
+
+        function initVocabEngine() {
+            // 从浏览器本地缓存 LocalStorage 中提取数据
+            const data = localStorage.getItem('MZ_JAP_VOCAB_DB');
+            localVocabDB = data ? JSON.parse(data) : [];
+            refreshEngineState();
+        }
+
+        // 核心精算：扫描哪些词到期该复习了
+        function refreshEngineState() {
+            const now = Date.now();
+            dueCardsPool = [];
+
+            localVocabDB.forEach(item => {
+                // 计算距离上次打卡过去了多少小时
+                const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
+                const currentStage = item.stage || 0;
+                
+                if (currentStage < EBBINGHAUS_INTERVALS.length) {
+                    const requiredHours = EBBINGHAUS_INTERVALS[currentStage];
+                    if (hoursPassed >= requiredHours) {
+                        dueCardsPool.push(item);
+                    }
+                }
+            });
+
+            // 更新仪表盘数字
+            document.getElementById('totalCount').innerText = localVocabDB.length;
+            document.getElementById('dueCount').innerText = dueCardsPool.length;
+
+            // 渲染卡片界面
+            renderActiveCard();
+        }
+
+        // 渲染单张盲盒卡片
+        function renderActiveCard() {
+            const emptyState = document.getElementById('emptyState');
+            const activeCard = document.getElementById('activeCard');
+            const cardIndexText = document.getElementById('cardIndexText');
+
+            if (dueCardsPool.length === 0) {
+                emptyState.classList.remove('hidden');
+                activeCard.classList.add('hidden');
+                cardIndexText.innerText = "0 / 0";
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            activeCard.classList.remove('hidden');
+            
+            // 指针防越界安全锁
+            if (currentIndex >= dueCardsPool.length) currentIndex = 0;
+            cardIndexText.innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
+
+            const card = dueCardsPool[currentIndex];
+            document.getElementById('cardLevel').innerText = card.level;
+            document.getElementById('cardWord').innerText = card.word;
+            document.getElementById('cardFurigana').innerText = card.furigana || '无';
+            document.getElementById('cardMeaning').innerText = card.meaning;
+            document.getElementById('cardMemo').innerText = card.memo || '暂无上下文关联例句说明。';
+
+            // 状态完全重置为有码隐藏模式
+            document.getElementById('blurWrapper').classList.add('blur-md', 'pointer-events-none', 'select-none');
+            document.getElementById('triggerBtnBox').classList.remove('hidden');
+            document.getElementById('decisionBox').classList.add('hidden');
+        }
+
+        // 点击撕开盲盒展现答案
+        function revealCard() {
+            document.getElementById('blurWrapper').classList.remove('blur-md', 'pointer-events-none', 'select-none');
+            document.getElementById('triggerBtnBox').classList.add('hidden');
+            document.getElementById('decisionBox').classList.remove('hidden'); // 显示命运抉择按键
+        }
+
+        // 处理艾宾浩斯晋级或贬职抉择
+        function handleDecision(isRemembered) {
+            const card = dueCardsPool[currentIndex];
+            // 在全局大数据库中精准定位此词
+            const matchedItem = localVocabDB.find(i => i.id === card.id);
+
+            if (matchedItem) {
+                if (isRemembered) {
+                    // 记住了！阶段上升一级
+                    matchedItem.stage = (matchedItem.stage || 0) + 1;
+                } else {
+                    // 没记住！惩罚性重回第一阶段(1小时后重新复习)
+                    matchedItem.stage = 1;
+                }
+                matchedItem.lastTime = Date.now(); // 盖上最新打卡时间戳
+                
+                // 数据落地写入浏览器缓存
+                localStorage.setItem('MZ_JAP_VOCAB_DB', JSON.stringify(localVocabDB));
+                
+                // 刷新引擎重新跑数
+                refreshEngineState();
+            }
+        }
+
+        // 保存录入的新单词
+        function saveNewVocab() {
+            const word = document.getElementById('vWord').value.trim();
+            const level = document.getElementById('vLevel').value;
+            const furigana = document.getElementById('vFurigana').value.trim();
+            const meaning = document.getElementById('vMeaning').value.trim();
+            const memo = document.getElementById('vMemo').value.trim();
+
+            if (!word || !meaning) {
+                alert("请输入日语词汇以及核心其中文意思。");
+                return;
+            }
+
+            const newVocab = {
+                id: 'vocab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                word, level, furigana, meaning, memo,
+                stage: 0,        // 初始处于第0天轮次
+                lastTime: Date.now()
+            };
+
+            localVocabDB.push(newVocab);
+            localStorage.setItem('MZ_JAP_VOCAB_DB', JSON.stringify(localVocabDB));
+
+            // 清空表单输入框
+            document.getElementById('vWord').value = '';
+            document.getElementById('vFurigana').value = '';
+            document.getElementById('vMeaning').value = '';
+            document.getElementById('vMemo').value = '';
+
+            alert(`🎉 成功存入1个 ${level} 词汇！`);
+            refreshEngineState();
+        }
+
+        // 📤 数据备份：导出成物理文本文件
+        function exportBackupData() {
+            if(localVocabDB.length === 0) { alert("当前词库空空如也，无需导出。"); return; }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `MZ_Edu_日语艾宾浩斯词库备份_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // 📥 数据恢复：从外部文本文件注入浏览器
+        function importBackupData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        if (confirm(`确定要导入这 ${importedData.length} 个备份词汇吗？这会合并覆盖你现有的浏览器缓存。`)) {
+                            localVocabDB = importedData;
+                            localStorage.setItem('MZ_JAP_VOCAB_DB', JSON.stringify(localVocabDB));
+                            refreshEngineState();
+                            alert("词库成功完美恢复！");
+                        }
+                    } else { alert("文件格式不合法，请使用本工具导出的JSON文件。"); }
+                } catch(err) { alert("解析失败，请检查文件是否损坏。"); }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>

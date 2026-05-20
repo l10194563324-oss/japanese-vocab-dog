@@ -123,9 +123,9 @@
                         <div class="space-y-2 flex justify-between items-start">
                             <div>
                                 <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">N3</span>
-                                <h1 id="cardWord" class="text-4xl font-black font-serif tracking-wide text-gray-900 pt-2">にともなって</h1>
+                                <h1 id="cardWord" class="text-4xl font-black font-serif tracking-wide text-gray-900 pt-2">加载中...</h1>
                             </div>
-                            <button onclick="speakJapanese()" class="p-2.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-lg text-lg cursor-pointer transition shadow-sm" title="朗读日语原音">
+                            <button onclick="speakJapanese()" class="p-2.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm flex items-center gap-1" title="朗读日语原音">
                                 🔊 朗读原音
                             </button>
                         </div>
@@ -133,10 +133,10 @@
                         <div id="hiddenZone" class="bg-gray-50 border border-gray-100 p-5 rounded-xl space-y-3 opacity-100 transition-opacity">
                             <div class="blur-md pointer-events-none select-none transition-all duration-300" id="blurWrapper">
                                 <div class="text-xs text-gray-400 editable-zone py-1 flex items-center" onclick="makeEditable('furigana')">
-                                    汉字标记：<span id="cardFuriganaContainer" class="inline-block ml-1 flex-1 font-serif text-sm text-gray-880 font-bold"><span id="cardFurigana">伴って</span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span></span>
+                                    汉字标记：<span id="cardFuriganaContainer" class="inline-block ml-1 flex-1 font-serif text-sm text-gray-800 font-bold"><span id="cardFurigana"></span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span></span>
                                 </div>
                                 <div class="text-xs text-gray-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('meaning')">
-                                    中文解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-base text-emerald-800 font-bold"><span id="cardMeaning">随着...</span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span></span>
+                                    中文解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-base text-emerald-800 font-bold"><span id="cardMeaning"></span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span></span>
                                 </div>
                                 <div class="text-xs text-gray-400 editable-zone py-1 mt-2 border-t border-gray-200/60 pt-2" onclick="makeEditable('memo')">
                                     听抄例句/接续：
@@ -183,13 +183,19 @@
         let localVocabDB = []; let dueCardsPool = []; let currentIndex = 0; let isRevealedStatus = false;
 
         function initVocabEngine() {
-            const data = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
+            // 💡 核心安全平滑迁移机制：优先读取最新文法库钥匙，如果没有，就去无缝提取旧词库的数据
+            let data = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
+            if (!data) {
+                data = localStorage.getItem('MZ_JAP_VOCAB_DB'); // 安全引渡旧词库数据
+                if (data) {
+                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', data); // 自动无损灌装给新库
+                }
+            }
             localVocabDB = data ? JSON.parse(data) : [];
             refreshEngineState();
             if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
         }
 
-        // 🔊 核心朗读合成算法
         function speakJapanese() {
             if (!('speechSynthesis' in window)) { alert("当前浏览器不支持TTS语音朗读。"); return; }
             if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
@@ -197,7 +203,6 @@
             const card = dueCardsPool[currentIndex];
             if (!card) return;
 
-            // 智能抓取发音文本
             let textToSpeak = card.furigana && card.furigana !== '无' ? card.furigana : card.word;
             if (isRevealedStatus && card.memo && card.memo !== '暂无详细笔记。') {
                 textToSpeak += "。 " + card.memo;
@@ -210,7 +215,7 @@
             const jaVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP'));
             if (jaVoice) utterance.voice = jaVoice;
 
-            utterance.rate = 0.85; // 稍微放慢语速方便跟读
+            utterance.rate = 0.85; 
             window.speechSynthesis.speak(utterance);
         }
 
@@ -274,4 +279,83 @@
         function makeEditable(key) {
             if (!isRevealedStatus) return;
             const card = dueCardsPool[currentIndex];
-            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'meaning' ? 'cardMeaningContainer' : '
+            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'meaning' ? 'cardMeaningContainer' : 'cardMemoContainer');
+            const container = document.getElementById(id);
+            if (container.querySelector('input') || container.querySelector('textarea')) return;
+
+            let val = card[key] || "";
+            let el = key === 'memo' ? `<textarea class="live-edit-input text-xs" rows="2">${val}</textarea>` : `<input type="text" class="live-edit-input" value="${val}" />`;
+            
+            container.innerHTML = el;
+            const input = container.children[0];
+            input.focus();
+
+            input.onblur = function() {
+                const newText = input.value.trim();
+                const matched = localVocabDB.find(i => i.id === card.id);
+                if (matched) {
+                    matched[key] = newText;
+                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                }
+                if (key === 'furigana') resetDOM(id, newText || '无', 'text-gray-800 text-sm font-bold font-serif');
+                if (key === 'meaning') resetDOM(id, newText, 'text-emerald-800 text-base font-bold');
+                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-gray-600 font-sans mt-1 italic text-xs leading-relaxed');
+                card[key] = newText;
+            };
+        }
+
+        function handleDecision(yes) {
+            const card = dueCardsPool[currentIndex];
+            const matched = localVocabDB.find(i => i.id === card.id);
+            if (matched) {
+                matched.stage = yes ? (matched.stage || 0) + 1 : 1;
+                matched.lastTime = Date.now();
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                refreshEngineState();
+            }
+        }
+
+        function saveNewVocab() {
+            const word = document.getElementById('vWord').value.trim();
+            const level = document.getElementById('vLevel').value;
+            const furigana = document.getElementById('vFurigana').value.trim();
+            const meaning = document.getElementById('vMeaning').value.trim();
+            const memo = document.getElementById('vMemo').value.trim();
+            if (!word || !meaning) return alert("请填写完整信息。");
+
+            localVocabDB.push({ id: 'g_' + Date.now(), word, level, furigana, meaning, memo, stage: 0, lastTime: Date.now() });
+            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+            
+            ['vWord','vFurigana','vMeaning','vMemo'].forEach(id => document.getElementById(id).value = '');
+            refreshEngineState();
+        }
+
+        function exportBackupData() {
+            if(localVocabDB.length === 0) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `N5-N2自查文法备份_${Date.now()}.json`);
+            dl.click();
+        }
+
+        function importBackupData(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data)) {
+                        if (confirm(`导入 ${data.length} 条记录？`)) {
+                            localVocabDB = data;
+                            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                            refreshEngineState();
+                        }
+                    }
+                } catch(err) { alert("文件解析失败。"); }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>

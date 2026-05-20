@@ -1,361 +1,408 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N5-N2自查文法库</title>
+    <title>MZ.Auto SNS Poster Generator</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: -apple-system, "PingFang SC", "Hiragino Sans", "Yu Gothic", sans-serif; background-color: #FBFBFA; color: #111111; }
-        input, select, textarea { background-color: #FAFAFA; border: 1px solid #E5E5E3 !important; transition: all 0.15s ease; }
-        input:focus, select:focus, textarea:focus { border-color: #111111 !important; background-color: #FFF; outline: none; }
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #0B0F19;
+            color: #F3F4F6;
+        }
+        .canvas-area {
+            background-image: radial-gradient(#1E293B 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        .layer-active {
+            border: 2px solid #3B82F6 !important;
+        }
+        /* 隐藏滚动条但保持功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* 🔒 安全锁拦截遮罩 */
-        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #FBFBFA; z-index: 9999; display: flex; justify-content: center; align-items: center; }
-        #appContainer { display: none; }
-        
-        /* ✏️ 原地快捷修改输入框样式 */
-        .live-edit-input { border: 1px dashed #10B981 !important; background-color: #FFF !important; padding: 2px 6px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 4px; }
-        .edit-hint { opacity: 0; transition: opacity 0.2s ease; cursor: pointer; }
-        .editable-zone:hover .edit-hint { opacity: 0.6; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen flex justify-center items-start">
+<body class="h-screen overflow-hidden flex flex-col">
 
-    <div id="authOverlay">
-        <div class="w-full max-w-sm p-8 bg-white rounded-xl border border-[#E5E5E3] shadow-lg text-center space-y-5">
-            <div class="flex flex-col items-center">
-                <div class="w-8 h-0.5 bg-[#111] mb-3"></div>
-                <h3 class="text-sm font-black tracking-widest uppercase text-gray-800">NIHONGO LOCK / 授权访问</h3>
-                <p class="text-[11px] text-gray-400 mt-1">请输入授权密码进入 N5-N2自查文法库</p>
+    <!-- Top Navigation Bar -->
+    <header class="h-14 border-b border-gray-800 bg-[#111827] px-4 flex items-center justify-between z-10">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i data-lucide="layout"></i>
             </div>
-            <div class="space-y-3">
-                <input type="password" id="passInput" placeholder="输入授权密码" class="w-full p-3 rounded-lg text-xs text-center font-bold tracking-widest" onkeydown="if(event.keyCode==13) verifyPassword()">
-                <button onclick="verifyPassword()" class="w-full bg-[#111111] text-white p-2.5 rounded-lg text-xs font-bold tracking-wider cursor-pointer hover:bg-[#333] transition">
-                    进入系统
-                </button>
-            </div>
-            <p id="errorHint" class="text-[10px] text-red-600 font-bold opacity-0 transition-opacity">❌ 授权密码错误</p>
-        </div>
-    </div>
-
-    <div id="appContainer" class="w-full max-w-7xl flex flex-col gap-8">
-        
-        <div class="bg-white p-6 md:p-8 rounded-xl border border-[#E5E5E3] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-                <div class="w-12 h-0.5 bg-[#111] mb-2"></div>
-                <h3 class="text-lg font-bold text-[#111] tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-[11px] text-[#A0A09C] mt-1">自动周期机制：支持在刷题舱原地修改语法解释与听抄例句，带原生高质量日语发音朗读。</p>
-            </div>
-            <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-[#EEE] w-full md:w-auto font-serif">
-                <div class="text-center md:text-left">
-                    <span class="block text-[10px] font-bold text-red-500 tracking-wider mb-1 uppercase">🚨 今日截止需复习</span>
-                    <span class="text-4xl font-black tracking-tighter text-red-600" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-gray-400">条</span>
-                </div>
-                <div class="text-center md:text-left border-l border-gray-200 pl-8">
-                    <span class="block text-[10px] font-bold text-gray-400 tracking-wider mb-1 uppercase">📦 语法库总储备</span>
-                    <span class="text-4xl font-black tracking-tighter text-gray-800" id="totalCount">0</span><span class="text-xs font-bold ml-1 text-gray-400">条</span>
-                </div>
+                <h1 class="text-sm font-bold tracking-wider text-white">MZ.Auto</h1>
+                <p class="text-[10px] text-gray-400">Osaka Rental Poster Studio</p>
             </div>
         </div>
+        
+        <!-- Canvas Ratio Controls -->
+        <div class="flex bg-gray-800 p-1 rounded-lg space-x-1">
+            <button id="ratio-916" class="px-3 py-1 text-xs rounded font-medium bg-blue-600 text-white flex items-center space-x-1 transition">
+                <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                <span>9:16 (小红书/海报)</span>
+            </button>
+            <button id="ratio-11" class="px-3 py-1 text-xs rounded font-medium text-gray-400 hover:text-white flex items-center space-x-1 transition">
+                <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                <span>1:1 (正方形)</span>
+            </button>
+        </div>
 
-        <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Action Actions -->
+        <div>
+            <button id="btn-export" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold flex items-center space-x-2 transition shadow-lg shadow-emerald-900/20">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>高画質エクスポート</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar: Controls & Layers -->
+        <aside class="w-80 border-r border-gray-800 bg-[#111827] flex flex-col overflow-y-auto no-scrollbar">
+            <!-- Section: Assets Upload -->
+            <div class="p-4 border-b border-gray-800">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">素材アップロード</h2>
+                <label class="border-2 border-dashed border-gray-700 hover:border-blue-500 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition bg-gray-900/50 group">
+                    <i data-lucide="image-plus" class="w-8 h-8 text-gray-500 group-hover:text-blue-400 mb-2 transition"></i>
+                    <span class="text-xs text-gray-400 group-hover:text-gray-200">車両画像、背景を選択</span>
+                    <input type="file" id="upload-img" accept="image/*" class="hidden">
+                </label>
+            </div>
+
+            <!-- Section: Text Controls -->
+            <div class="p-4 border-b border-gray-800 space-y-4">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">テキスト編集</h2>
+                <div>
+                    <label class="text-[11px] text-gray-400 block mb-1">メインタイトル (純日文)</label>
+                    <input type="text" id="text-main" value="納豆は、食べられないわけではないが、好きじゃない。" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-[11px] text-gray-400 block mb-1">サブタイトル / ブランド名</label>
+                    <input type="text" id="text-sub" value="MZ.Auto Osaka Rental" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">文字サイズ</label>
+                        <input type="number" id="text-size" value="28" class="w-full bg-gray-900 border border-gray-700 rounded p-1.5 text-sm text-white text-center">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-gray-400 block mb-1">文字カラー</label>
+                        <div class="flex items-center bg-gray-900 border border-gray-700 rounded p-1">
+                            <input type="color" id="text-color" value="#FFFFFF" class="w-8 h-7 border-0 bg-transparent cursor-pointer">
+                            <span id="text-color-hex" class="text-xs font-mono ml-2 uppercase">#FFF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Layer Transformations -->
+            <div class="p-4 space-y-4">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">レイヤー変形 (画像)</h2>
+                <div>
+                    <label class="text-[11px] text-gray-400 flex justify-between mb-1">
+                        <span>拡大・縮小</span>
+                        <span id="val-scale">1.0x</span>
+                    </label>
+                    <input type="range" id="layer-scale" min="0.1" max="3" step="0.05" value="1" class="w-full accent-blue-500">
+                </div>
+                <div>
+                    <label class="text-[11px] text-gray-400 flex justify-between mb-1">
+                        <span>回転角度</span>
+                        <span id="val-rotate">0°</span>
+                    </label>
+                    <input type="range" id="layer-rotate" min="-180" max="180" step="1" value="0" class="w-full accent-blue-500">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Workspace: Interactive Canvas Area -->
+        <main class="flex-1 canvas-area flex items-center justify-center p-6 overflow-auto relative">
             
-            <div class="lg:col-span-5 flex flex-col gap-6">
-                <div class="bg-white p-6 rounded-xl border border-[#E5E5E3] shadow-sm space-y-4">
-                    <span class="text-xs font-black tracking-widest text-[#111] uppercase block border-b border-[#EEE] pb-2">01 / INPUT NEW GRAMMAR (录入新语法)</span>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-gray-400 mb-1">语法点/词汇</label>
-                            <input type="text" id="vWord" placeholder="例: ～にともなって" class="w-full p-2 rounded text-xs font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 mb-1">级别</label>
-                            <select id="vLevel" class="w-full p-2 rounded text-xs font-bold">
-                                <option value="N2">N2 核心</option><option value="N3" selected>N3 核心</option><option value="N4">N4 基础</option><option value="N5">N5 基础</option>
-                            </select>
-                        </div>
+            <!-- Dynamic Canvas Container -->
+            <div id="poster-canvas" class="bg-gradient-to-b from-[#1E2530] to-[#0A0D14] shadow-2xl relative overflow-hidden transition-all duration-300 select-none" style="width: 360px; height: 640px;">
+                
+                <!-- Background Decoration Elements -->
+                <div class="absolute inset-0 border border-white/10 pointer-events-none z-10"></div>
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <!-- Image Layer Container -->
+                <div id="layer-img-container" class="absolute inset-0 flex items-center justify-center cursor-move" style="transform: translate(0px, 0px) scale(1) rotate(0deg);">
+                    <img id="display-img" src="" class="max-w-full max-h-full pointer-events-none hidden object-contain">
+                    <div id="img-placeholder" class="text-center text-gray-600 px-6">
+                        <i data-lucide="image" class="w-12 h-12 mx-auto mb-2 opacity-30"></i>
+                        <p class="text-xs opacity-50">左側から車両画像をアップロードしてください</p>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 mb-1">对应汉字/标记 (可不填)</label>
-                        <input type="text" id="vFurigana" placeholder="例: ～に伴って" class="w-full p-2 rounded text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 mb-1">中文语法解释</label>
-                        <input type="text" id="vMeaning" placeholder="例: 随着...、伴随着..." class="w-full p-2 rounded text-xs font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 mb-1">听抄例句/接续/备注说明</label>
-                        <textarea id="vMemo" rows="2" placeholder="输入接续规则或YouTube听抄到的场景例句..." class="w-full p-2 rounded text-xs"></textarea>
-                    </div>
-                    <button onclick="saveNewVocab()" class="w-full text-xs font-black tracking-widest py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition cursor-pointer">
-                        📥 安全存入自查文法库
-                    </button>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-[#E5E5E3] shadow-sm text-xs space-y-3">
-                    <span class="text-xs font-black tracking-widest text-gray-400 uppercase block">数据迁移保护盾</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="exportBackupData()" class="p-2 border border-dashed rounded text-center font-bold hover:bg-gray-50 cursor-pointer">
-                            📤 备份导出文法库
-                        </button>
-                        <label class="p-2 border border-dashed rounded text-center font-bold hover:bg-gray-50 cursor-pointer block">
-                            📥 导入恢复文法库
-                            <input type="file" id="importFile" class="hidden" onchange="importBackupData(this)">
-                        </label>
+                <!-- Gradient Overlay for Typography Contrast -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
+
+                <!-- Text Layer: Bottom Branding & Copy -->
+                <div class="absolute bottom-0 left-0 w-full p-8 z-20 flex flex-col space-y-4">
+                    <!-- Brand Tag -->
+                    <div class="self-start bg-blue-600/90 text-white text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded shadow-md border border-blue-400/20">
+                        <span id="render-sub">MZ.Auto Osaka Rental</span>
                     </div>
+                    <!-- Main Pure Japanese Text Line -->
+                    <h2 id="render-main" class="text-white font-bold leading-snug tracking-wide break-words drop-shadow-lg" style="font-size: 28px;">
+                        納豆は、食べられないわけではないが、好きじゃない。
+                    </h2>
                 </div>
+                
             </div>
 
-            <div class="lg:col-span-7 bg-white p-6 rounded-xl border border-[#E5E5E3] shadow-sm flex flex-col min-h-[480px]">
-                <div class="border-b border-[#EEEEEE] pb-3 mb-6 flex justify-between items-center">
-                    <span class="text-xs font-black tracking-widest text-[#111] uppercase">02 / MEMORY COCKPIT (智能自查舱)</span>
-                    <span class="text-[10px] font-mono text-gray-400" id="cardIndexText">0 / 0</span>
-                </div>
-
-                <div id="cardCockpit" class="flex-1 flex flex-col justify-between space-y-8">
-                    <div id="emptyState" class="text-center py-20 italic text-gray-400 text-xs hidden">
-                        🎉 太棒了！当前待自查复习的语法点已通关清零！
-                    </div>
-
-                    <div id="activeCard" class="space-y-6 flex-1 flex flex-col justify-between">
-                        <div class="space-y-2 flex justify-between items-start">
-                            <div>
-                                <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">N3</span>
-                                <h1 id="cardWord" class="text-4xl font-black font-serif tracking-wide text-gray-900 pt-2">加载中...</h1>
-                            </div>
-                            <button onclick="speakJapanese()" class="p-2.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm flex items-center gap-1" title="朗读日语原音">
-                                🔊 朗读原音
-                            </button>
-                        </div>
-
-                        <div id="hiddenZone" class="bg-gray-50 border border-gray-100 p-5 rounded-xl space-y-3 opacity-100 transition-opacity">
-                            <div class="blur-md pointer-events-none select-none transition-all duration-300" id="blurWrapper">
-                                <div class="text-xs text-gray-400 editable-zone py-1 flex items-center" onclick="makeEditable('furigana')">
-                                    汉字标记：<span id="cardFuriganaContainer" class="inline-block ml-1 flex-1 font-serif text-sm text-gray-800 font-bold"><span id="cardFurigana"></span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span></span>
-                                </div>
-                                <div class="text-xs text-gray-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('meaning')">
-                                    中文解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-base text-emerald-800 font-bold"><span id="cardMeaning"></span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span></span>
-                                </div>
-                                <div class="text-xs text-gray-400 editable-zone py-1 mt-2 border-t border-gray-200/60 pt-2" onclick="makeEditable('memo')">
-                                    听抄例句/接续：
-                                    <div id="cardMemoContainer" class="text-gray-600 font-sans mt-1 italic text-xs leading-relaxed"><span id="cardMemo"></span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span></div>
-                                </div>
-                            </div>
-                            <div id="triggerBtnBox" class="text-center py-4">
-                                <button onclick="revealCard()" id="revealBtn" class="px-6 py-2 bg-gray-800 text-white font-bold text-xs rounded-full hover:bg-black transition cursor-pointer shadow-sm">
-                                    👁️ 脑补完毕，查看隐藏答案
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="decisionBox" class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 hidden">
-                            <button onclick="handleDecision(false)" class="py-3 bg-red-50 text-red-700 rounded-lg text-xs font-bold border border-red-200 hover:bg-red-100 transition cursor-pointer text-center">
-                                ❌ 没想起来 (重置遗忘步长)
-                            </button>
-                            <button onclick="handleDecision(true)" class="py-3 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition cursor-pointer text-center shadow-sm">
-                                ✅ 顺利通过 (晋级下阶段)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+            <!-- Hidden Standard Canvas for High-Res Rendering -->
+            <canvas id="hidden-export-canvas" class="hidden"></canvas>
+        </main>
     </div>
 
+    <!-- Script Block -->
     <script>
-        const CORRECT_PASSWORD = "MZ666"; 
+        // Initialize Lucide Icons
+        lucide.createIcons();
 
-        function verifyPassword() {
-            if(document.getElementById('passInput').value === CORRECT_PASSWORD) {
-                document.getElementById('authOverlay').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'block';
-                initVocabEngine(); 
-            } else {
-                document.getElementById('errorHint').style.opacity = '1';
-                document.getElementById('passInput').value = '';
-            }
-        }
+        // State Management
+        let currentRatio = '916'; // '916' or '11'
+        let imgState = {
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotate: 0,
+            isDragging: false,
+            startX: 0,
+            startY: 0
+        };
 
-        const EBBINGHAUS_INTERVALS = [0, 1, 24, 72, 168, 360];
-        let localVocabDB = []; let dueCardsPool = []; let currentIndex = 0; let isRevealedStatus = false;
+        // DOM Elements
+        const posterCanvas = document.getElementById('poster-canvas');
+        const layerImgContainer = document.getElementById('layer-img-container');
+        const displayImg = document.getElementById('display-img');
+        const imgPlaceholder = document.getElementById('img-placeholder');
+        
+        // Input Controls
+        const uploadImg = document.getElementById('upload-img');
+        const textMain = document.getElementById('text-main');
+        const textSub = document.getElementById('text-sub');
+        const textSize = document.getElementById('text-size');
+        const textColor = document.getElementById('text-color');
+        const textColorHex = document.getElementById('text-color-hex');
+        
+        // Transform Sliders
+        const layerScale = document.getElementById('layer-scale');
+        const layerRotate = document.getElementById('layer-rotate');
+        const valScale = document.getElementById('val-scale');
+        const valRotate = document.getElementById('val-rotate');
 
-        function initVocabEngine() {
-            // 💡 核心安全平滑迁移机制：优先读取最新文法库钥匙，如果没有，就去无缝提取旧词库的数据
-            let data = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
-            if (!data) {
-                data = localStorage.getItem('MZ_JAP_VOCAB_DB'); // 安全引渡旧词库数据
-                if (data) {
-                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', data); // 自动无损灌装给新库
+        // Render Targets
+        const renderMain = document.getElementById('render-main');
+        const renderSub = document.getElementById('render-sub');
+
+        // --- Aspect Ratio Toggle ---
+        document.getElementById('ratio-916').addEventListener('click', function() {
+            currentRatio = '916';
+            posterCanvas.style.width = '360px';
+            posterCanvas.style.height = '640px';
+            this.className = "px-3 py-1 text-xs rounded font-medium bg-blue-600 text-white flex items-center space-x-1 transition";
+            document.getElementById('ratio-11').className = "px-3 py-1 text-xs rounded font-medium text-gray-400 hover:text-white flex items-center space-x-1 transition";
+        });
+
+        document.getElementById('ratio-11').addEventListener('click', function() {
+            currentRatio = '11';
+            posterCanvas.style.width = '450px';
+            posterCanvas.style.height = '450px';
+            this.className = "px-3 py-1 text-xs rounded font-medium bg-blue-600 text-white flex items-center space-x-1 transition";
+            document.getElementById('ratio-916').className = "px-3 py-1 text-xs rounded font-medium text-gray-400 hover:text-white flex items-center space-x-1 transition";
+        });
+
+        // --- Live Typography Sync ---
+        textMain.addEventListener('input', (e) => renderMain.innerText = e.target.value);
+        textSub.addEventListener('input', (e) => renderSub.innerText = e.target.value);
+        textSize.addEventListener('input', (e) => renderMain.style.fontSize = `${e.target.value}px`);
+        textColor.addEventListener('input', (e) => {
+            renderMain.style.color = e.target.value;
+            textColorHex.innerText = e.target.value;
+        });
+
+        // --- Image Upload Processing ---
+        uploadImg.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    displayImg.src = event.target.result;
+                    displayImg.classList.remove('hidden');
+                    imgPlaceholder.classList.add('hidden');
+                    // Reset Transforms
+                    imgState.x = 0; imgState.y = 0; imgState.scale = 1; imgState.rotate = 0;
+                    layerScale.value = 1; layerRotate.value = 0;
+                    updateTransform();
                 }
+                reader.readAsDataURL(file);
             }
-            localVocabDB = data ? JSON.parse(data) : [];
-            refreshEngineState();
-            if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
+        });
+
+        // --- Multi-touch/Mouse Drag Logic ---
+        layerImgContainer.addEventListener('mousedown', (e) => {
+            if(displayImg.classList.contains('hidden')) return;
+            imgState.isDragging = true;
+            imgState.startX = e.clientX - imgState.x;
+            imgState.startY = e.clientY - imgState.y;
+            layerImgContainer.classList.add('layer-active');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!imgState.isDragging) return;
+            imgState.x = e.clientX - imgState.startX;
+            imgState.y = e.clientY - imgState.startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            imgState.isDragging = false;
+            layerImgContainer.classList.remove('layer-active');
+        });
+
+        // --- Transformation Slider Listeners ---
+        layerScale.addEventListener('input', (e) => {
+            imgState.scale = parseFloat(e.target.value);
+            valScale.innerText = imgState.scale.toFixed(2) + 'x';
+            updateTransform();
+        });
+
+        layerRotate.addEventListener('input', (e) => {
+            imgState.rotate = parseInt(e.target.value);
+            valRotate.innerText = imgState.rotate + '°';
+            updateTransform();
+        });
+
+        function updateTransform() {
+            layerImgContainer.style.transform = `translate(${imgState.x}px, ${imgState.y}px) scale(${imgState.scale}) rotate(${imgState.rotate}deg)`;
         }
 
-        function speakJapanese() {
-            if (!('speechSynthesis' in window)) { alert("当前浏览器不支持TTS语音朗读。"); return; }
-            if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
-
-            const card = dueCardsPool[currentIndex];
-            if (!card) return;
-
-            let textToSpeak = card.furigana && card.furigana !== '无' ? card.furigana : card.word;
-            if (isRevealedStatus && card.memo && card.memo !== '暂无详细笔记。') {
-                textToSpeak += "。 " + card.memo;
-            }
-
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = 'ja-JP';
-
-            const voices = window.speechSynthesis.getVoices();
-            const jaVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP'));
-            if (jaVoice) utterance.voice = jaVoice;
-
-            utterance.rate = 0.85; 
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function refreshEngineState() {
-            const now = Date.now();
-            dueCardsPool = [];
-            localVocabDB.forEach(item => {
-                const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
-                const currentStage = item.stage || 0;
-                if (currentStage < EBBINGHAUS_INTERVALS.length) {
-                    const req = EBBINGHAUS_INTERVALS[currentStage];
-                    if (hoursPassed >= req) dueCardsPool.push(item);
-                }
-            });
-            document.getElementById('totalCount').innerText = localVocabDB.length;
-            document.getElementById('dueCount').innerText = dueCardsPool.length;
-            renderActiveCard();
-        }
-
-        function renderActiveCard() {
-            const emptyState = document.getElementById('emptyState');
-            const activeCard = document.getElementById('activeCard');
-            const cardIndexText = document.getElementById('cardIndexText');
-
-            if (dueCardsPool.length === 0) {
-                emptyState.classList.remove('hidden');
-                activeCard.classList.add('hidden');
-                cardIndexText.innerText = "0 / 0";
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            activeCard.classList.remove('hidden');
-            if (currentIndex >= dueCardsPool.length) currentIndex = 0;
-            cardIndexText.innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
-
-            const card = dueCardsPool[currentIndex];
-            document.getElementById('cardLevel').innerText = card.level;
-            document.getElementById('cardWord').innerText = card.word;
-            isRevealedStatus = false;
-            resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-gray-800 text-sm font-bold font-serif');
-            resetDOM('cardMeaningContainer', card.meaning, 'text-emerald-800 text-base font-bold');
-            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-gray-600 font-sans mt-1 italic text-xs leading-relaxed');
-
-            document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
-            document.getElementById('triggerBtnBox').classList.remove('hidden');
-            document.getElementById('decisionBox').classList.add('hidden');
-        }
-
-        function resetDOM(id, text, cls) {
-            document.getElementById(id).innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-emerald-600 pl-1">✏️</span>`;
-        }
-
-        function revealCard() {
-            document.getElementById('blurWrapper').className = "transition-all duration-300";
-            document.getElementById('triggerBtnBox').classList.add('hidden');
-            document.getElementById('decisionBox').classList.remove('hidden');
-            isRevealedStatus = true;
-        }
-
-        function makeEditable(key) {
-            if (!isRevealedStatus) return;
-            const card = dueCardsPool[currentIndex];
-            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'meaning' ? 'cardMeaningContainer' : 'cardMemoContainer');
-            const container = document.getElementById(id);
-            if (container.querySelector('input') || container.querySelector('textarea')) return;
-
-            let val = card[key] || "";
-            let el = key === 'memo' ? `<textarea class="live-edit-input text-xs" rows="2">${val}</textarea>` : `<input type="text" class="live-edit-input" value="${val}" />`;
+        // --- Canvas HD Export System ---
+        document.getElementById('btn-export').addEventListener('click', function() {
+            const canvas = document.getElementById('hidden-export-canvas');
+            const ctx = canvas.getContext('2d');
             
-            container.innerHTML = el;
-            const input = container.children[0];
-            input.focus();
-
-            input.onblur = function() {
-                const newText = input.value.trim();
-                const matched = localVocabDB.find(i => i.id === card.id);
-                if (matched) {
-                    matched[key] = newText;
-                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                }
-                if (key === 'furigana') resetDOM(id, newText || '无', 'text-gray-800 text-sm font-bold font-serif');
-                if (key === 'meaning') resetDOM(id, newText, 'text-emerald-800 text-base font-bold');
-                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-gray-600 font-sans mt-1 italic text-xs leading-relaxed');
-                card[key] = newText;
-            };
-        }
-
-        function handleDecision(yes) {
-            const card = dueCardsPool[currentIndex];
-            const matched = localVocabDB.find(i => i.id === card.id);
-            if (matched) {
-                matched.stage = yes ? (matched.stage || 0) + 1 : 1;
-                matched.lastTime = Date.now();
-                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                refreshEngineState();
-            }
-        }
-
-        function saveNewVocab() {
-            const word = document.getElementById('vWord').value.trim();
-            const level = document.getElementById('vLevel').value;
-            const furigana = document.getElementById('vFurigana').value.trim();
-            const meaning = document.getElementById('vMeaning').value.trim();
-            const memo = document.getElementById('vMemo').value.trim();
-            if (!word || !meaning) return alert("请填写完整信息。");
-
-            localVocabDB.push({ id: 'g_' + Date.now(), word, level, furigana, meaning, memo, stage: 0, lastTime: Date.now() });
-            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+            // Set High-res Scale factor (3x output for crisp text/images)
+            const scaleFactor = 3;
+            const origWidth = currentRatio === '916' ? 360 : 450;
+            const origHeight = currentRatio === '916' ? 640 : 450;
             
-            ['vWord','vFurigana','vMeaning','vMemo'].forEach(id => document.getElementById(id).value = '');
-            refreshEngineState();
-        }
+            canvas.width = origWidth * scaleFactor;
+            canvas.height = origHeight * scaleFactor;
+            ctx.scale(scaleFactor, scaleFactor);
 
-        function exportBackupData() {
-            if(localVocabDB.length === 0) return;
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
-            const dl = document.createElement('a');
-            dl.setAttribute("href", dataStr);
-            dl.setAttribute("download", `N5-N2自查文法备份_${Date.now()}.json`);
-            dl.click();
-        }
+            // 1. Draw Background Gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, origHeight);
+            gradient.addColorStop(0, '#1E2530');
+            gradient.addColorStop(1, '#0A0D14');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, origWidth, origHeight);
 
-        function importBackupData(input) {
-            const file = input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (Array.isArray(data)) {
-                        if (confirm(`导入 ${data.length} 条记录？`)) {
-                            localVocabDB = data;
-                            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                            refreshEngineState();
-                        }
-                    }
-                } catch(err) { alert("文件解析失败。"); }
-            };
-            reader.readAsText(file);
-        }
+            // 2. Draw Transformed Car Image Layer (If loaded)
+            if (!displayImg.classList.contains('hidden')) {
+                ctx.save();
+                // Move origin to current drag layout coordinates
+                ctx.translate(origWidth / 2 + imgState.x, origHeight / 2 + imgState.y);
+                ctx.scale(imgState.scale, imgState.scale);
+                ctx.rotate((imgState.rotate * Math.PI) / 180);
+
+                // Compute rendering layout bounding box
+                const iw = displayImg.naturalWidth;
+                const ih = displayImg.naturalHeight;
+                const aspect = iw / ih;
+                
+                let renderW = origWidth;
+                let renderH = origWidth / aspect;
+                if (renderH > origHeight) {
+                    renderH = origHeight;
+                    renderW = origHeight * aspect;
+                }
+
+                ctx.drawImage(displayImg, -renderW / 2, -renderH / 2, renderW, renderH);
+                ctx.restore();
+            }
+
+            // 3. Draw Bottom Contrast Shading
+            const textGuardGlow = ctx.createLinearGradient(0, origHeight - 200, 0, origHeight);
+            textGuardGlow.addColorStop(0, 'rgba(0,0,0,0)');
+            textGuardGlow.addColorStop(0.5, 'rgba(0,0,0,0.4)');
+            textGuardGlow.addColorStop(1, 'rgba(0,0,0,0.85)');
+            ctx.fillStyle = textGuardGlow;
+            ctx.fillRect(0, origHeight - 200, origWidth, 200);
+
+            // 4. Render Brand Sub-tag Box
+            ctx.save();
+            ctx.fillStyle = '#2563EB'; // Blue-600
+            const tagX = 32;
+            const tagY = origHeight - 140;
+            
+            ctx.font = 'bold 10px "Inter"';
+            const tagText = textSub.value.toUpperCase();
+            const tagWidth = ctx.measureText(tagText).width + 16;
+            
+            // Round rect draw
+            ctx.beginPath();
+            ctx.roundRect(tagX, tagY, tagWidth, 20, 4);
+            ctx.fill();
+            
+            // Tag Content
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(tagText, tagX + 8, tagY + 14);
+            ctx.restore();
+
+            // 5. Render Main Pure Japanese Copy wrapped nicely
+            ctx.save();
+            ctx.fillStyle = textColor.value;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            const fontSize = parseInt(textSize.value);
+            ctx.font = `bold ${fontSize}px "Noto Sans JP", "Inter"`;
+            
+            const textX = 32;
+            let textY = origHeight - 95;
+            const maxWidth = origWidth - 64;
+            
+            // Text Wrapping Engine
+            const words = textMain.value.split('');
+            let line = '';
+            const lineHeight = fontSize * 1.35;
+
+            for (let n = 0; n < words.length; n++) {
+                let testLine = line + words[n];
+                let metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    ctx.fillText(line, textX, textY);
+                    line = words[n];
+                    textY += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, textX, textY);
+            ctx.restore();
+
+            // 6. Push download stream
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `mz_auto_${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+        });
     </script>
 </body>
 </html>

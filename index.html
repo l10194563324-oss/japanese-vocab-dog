@@ -12,7 +12,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
         /* ✏️ 原地快捷修改输入框样式 */
-        .live-edit-input { border: 1px dashed #3B82F6 !important; background-color: #FFF !important; padding: 2px 6px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 4px; color: #1E3A8A; }
+        .live-edit-input { border: 1px dashed #3B82F6 !important; background-color: #FFF !important; padding: 4px 8px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #1E3A8A; }
         .edit-hint { opacity: 0; transition: opacity 0.2s ease; cursor: pointer; }
         .editable-zone:hover .edit-hint { opacity: 0.6; }
     </style>
@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-sky-400 mb-2"></div>
                 <h3 class="text-xl font-bold tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1">自动周期机制：免密秒载，【智能语感分流】无需特定符号分隔，自由粘贴即可智能识别。</p>
+                <p class="text-xs text-slate-300 mt-1">自动周期机制：免密秒载，接续规则已全线扩容为自动折行大文本舱，再长内容也完美装下。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-blue-900/50 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -47,8 +47,7 @@
                     
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1.5">
                         <label class="block text-[11px] font-black text-[#1E3A8A]">✨ 自由乱序输入/粘贴框</label>
-                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="管它有没有标点，直接把中日文、例句整段糊在这里，下方全自动特征分流判定填充..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
-                        <p class="text-[9px] text-slate-400">💡 提示：系统会自动寻找日语短句做语法、长句做例句、中文做翻译解释。</p>
+                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把听抄的整段文本糊在这里，下方全自动进行分流特征识别..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -74,8 +73,12 @@
                         <input type="text" id="vTranslation" class="w-full p-2.5 rounded-lg text-xs font-bold text-slate-800">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">中文语法功能解释/接续</label>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">中文语法功能解释</label>
                         <input type="text" id="vMeaning" class="w-full p-2.5 rounded-lg text-xs text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">接续规则 (支持自动多行换行)</label>
+                        <textarea id="vConnection" rows="2" placeholder="例: 动词辞书形/た形/ない形＋とともに&#10;名词＋にともなって" class="w-full p-2.5 rounded-lg text-xs text-slate-600 leading-relaxed"></textarea>
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">听抄日文例句/场景备注</label>
@@ -100,14 +103,14 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-7 bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col min-h-[480px] md:min-h-[520px] order-1 lg:order-2">
+            <div class="lg:col-span-7 bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col min-h-[480px] md:min-h-[540px] order-1 lg:order-2">
                 <div class="border-b border-slate-100 pb-3 mb-6 flex justify-between items-center">
                     <span class="text-xs font-black tracking-widest text-[#1E3A8A] uppercase">02 / MEMORY COCKPIT (智能自查舱)</span>
                     <div class="flex items-center gap-4">
                         <button onclick="deleteCurrentCard()" id="deleteBtn" class="text-[10px] font-bold text-slate-300 hover:text-red-600 transition cursor-pointer hidden">
                             🗑️ 删除此条
                         </button>
-                        <span class="text-[10px] font-mono text-slate-400" id="cardIndexText">0 / 0</span>
+                        <span class="text-[10px] font-mono text-gray-400" id="cardIndexText">0 / 0</span>
                     </div>
                 </div>
 
@@ -138,9 +141,13 @@
                                 <div class="text-xs text-slate-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('meaning')">
                                     功能解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-xs text-slate-600"><span id="cardMeaning"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></span>
                                 </div>
+                                <div class="text-xs text-slate-400 editable-zone py-1 mt-1 block" onclick="makeEditable('connection')">
+                                    接续规则：
+                                    <div id="cardConnectionContainer" class="text-slate-700 text-xs font-mono bg-white/60 p-2 rounded border border-slate-200/50 mt-1 leading-relaxed whitespace-pre-wrap"><span id="cardConnection"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
+                                </div>
                                 <div class="text-xs text-slate-400 editable-zone py-1 mt-2 border-t border-slate-200/60 pt-2" onclick="makeEditable('memo')">
                                     听抄例句/场景备注：
-                                    <div id="cardMemoContainer" class="text-slate-600 font-sans mt-1 italic text-xs leading-relaxed"><span id="cardMemo"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
+                                    <div id="cardMemoContainer" class="text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap"><span id="cardMemo"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
                                 </div>
                             </div>
                             <div id="triggerBtnBox" class="text-center py-4">
@@ -173,72 +180,47 @@
             initVocabEngine();
         };
 
-        // 💡 升级核心：智能启发式无标点分流引擎
         function handleSmartSplit() {
             const rawText = document.getElementById('vSmartPaste').value;
             if (!rawText.trim()) return;
 
-            // 1. 强力多维切分：不管用户输入换行、常见中日英文标点，统一揉碎变成干净的块列表 (chunks)
-            let chunks = rawText.split(/[\n，,；;／\/|\t]/)
-                                .map(c => c.trim())
-                                .filter(c => c.length > 0);
-
+            let chunks = rawText.split(/[\n，,；;／\/|\t]/).map(c => c.trim()).filter(c => c.length > 0);
             if (chunks.length === 0) return;
 
-            // 预设重置五个底层输入框的值
-            let discoveredWord = "";
-            let discoveredFurigana = "";
-            let discoveredTranslation = "";
-            let discoveredMeaning = "";
-            let discoveredMemo = "";
+            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dConnection = "", dMemo = "";
 
-            // 正则定义特征
-            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/; // 包含日文字符(假名或日文汉字)
-            const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/; // 纯假名判定
-            const hasChinese = /[\u4e00-\u9fa5]/; // 包含中文汉字
+            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+            const hasChinese = /[\u4e00-\u9fa5]/;
 
-            // 遍历特征，智能抓取填坑
-            chunks.forEach((chunk, index) => {
-                
-                // A. 判定是否为“日语长句例句”（包含日文句号、或者长度大于12的纯日文字符流）
+            chunks.forEach((chunk) => {
                 if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 12) && !hasChinese.test(chunk)) {
-                    if (!discoveredMemo) { discoveredMemo = chunk; return; }
+                    if (!dMemo) { dMemo = chunk; return; }
                 }
-
-                // B. 判定是否为“日语核心语法/词汇”：必须含日文，且比较短（12字以内），且是全段最先出现的日语
                 if (hasJapanese.test(chunk) && chunk.length <= 12 && !hasChinese.test(chunk)) {
-                    if (!discoveredWord) {
-                        discoveredWord = chunk;
-                        return;
-                    }
-                    // 如果已经抓到了主语法词，而紧接着又来了一个短日语（且带括号或包含异体字汉字），则判定为“汉字标记”
-                    if (discoveredWord && !discoveredFurigana) {
-                        discoveredFurigana = chunk.replace(/[\(\)（）\[\]]/g, ""); // 剥离多余括号
-                        return;
-                    }
+                    if (!dWord) { dWord = chunk; return; }
+                    if (dWord && !dFurigana) { dFurigana = chunk.replace(/[\(\)（）\[\]]/g, ""); return; }
                 }
-
-                // C. 判定是否为“中文翻译”：包含中文汉字，且字数简短核心（8个字以内）
                 if (hasChinese.test(chunk) && chunk.length <= 8) {
-                    if (!discoveredTranslation) { discoveredTranslation = chunk; return; }
+                    if (!dTranslation) { dTranslation = chunk; return; }
                 }
-
-                // D. 判定是否为“中文功能解释”：包含中文，且字数明显长（大于8个字），带有接续等长句特征
-                if (hasChinese.test(chunk) && chunk.length > 8) {
-                    if (!discoveredMeaning) { discoveredMeaning = chunk; return; }
+                if (chunk.length > 6) {
+                    if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('辞书') || chunk.includes('た形') || chunk.includes('ない形')) {
+                        if (!dConnection) { dConnection = chunk; return; }
+                    } else if (hasChinese.test(chunk)) {
+                        if (!dMeaning) { dMeaning = chunk; return; }
+                    }
                 }
             });
 
-            // 兜底降级兜底网：如果刚才用启发式特征没填满，且用户输入的行数刚好对应，按原顺序补填
-            if (!discoveredWord && chunks[0]) discoveredWord = chunks[0];
-            if (!discoveredTranslation && chunks[1] && hasChinese.test(chunks[1])) discoveredTranslation = chunks[1];
+            if (!dWord && chunks[0]) dWord = chunks[0];
+            if (!dTranslation && chunks[1] && hasChinese.test(chunks[1])) dTranslation = chunks[1];
 
-            // 最终落盘赋值给页面隐藏表单，实现秒级自动动态渲染
-            if (discoveredWord) document.getElementById('vWord').value = discoveredWord;
-            document.getElementById('vFurigana').value = discoveredFurigana;
-            if (discoveredTranslation) document.getElementById('vTranslation').value = discoveredTranslation;
-            document.getElementById('vMeaning').value = discoveredMeaning;
-            document.getElementById('vMemo').value = discoveredMemo;
+            if (dWord) document.getElementById('vWord').value = dWord;
+            document.getElementById('vFurigana').value = dFurigana;
+            if (dTranslation) document.getElementById('vTranslation').value = dTranslation;
+            document.getElementById('vMeaning').value = dMeaning;
+            document.getElementById('vConnection').value = dConnection;
+            document.getElementById('vMemo').value = dMemo;
         }
 
         function initVocabEngine() {
@@ -274,9 +256,7 @@
             if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP'));
 
             if (selectedVoice) utterance.voice = selectedVoice;
-
             utterance.rate = 0.82; 
-            utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
         }
 
@@ -325,7 +305,10 @@
             resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
             resetDOM('cardTranslationContainer', card.translation || card.meaning || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
             resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
-            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed');
+            
+            // 💡 渲染优化：接续规则支持换行原味呈现
+            resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
 
             document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
             document.getElementById('triggerBtnBox').classList.remove('hidden');
@@ -346,7 +329,7 @@
         function makeEditable(key) {
             if (!isRevealedStatus) return;
             const card = dueCardsPool[currentIndex];
-            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'translation' ? 'cardTranslationContainer' : (key === 'meaning' ? 'cardMeaningContainer' : 'cardMemoContainer'));
+            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'translation' ? 'cardTranslationContainer' : (key === 'meaning' ? 'cardMeaningContainer' : (key === 'connection' ? 'cardConnectionContainer' : 'cardMemoContainer')));
             
             const container = document.getElementById(id);
             if (container.querySelector('input') || container.querySelector('textarea')) return;
@@ -354,7 +337,8 @@
             let val = card[key] || "";
             if(key === 'translation' && !card.translation && card.meaning) val = card.meaning;
 
-            let el = key === 'memo' ? `<textarea class="live-edit-input text-xs" rows="2">${val}</textarea>` : `<input type="text" class="live-edit-input" value="${val}" />`;
+            // 💡 原地修改进化：如果点击的是例句（memo）或者接续规则（connection），全自动召唤多行大文本框，其余用普通 input
+            let el = (key === 'memo' || key === 'connection') ? `<textarea class="live-edit-input text-xs" rows="3">${val}</textarea>` : `<input type="text" class="live-edit-input" value="${val}" />`;
             
             container.innerHTML = el;
             const input = container.children[0];
@@ -370,7 +354,8 @@
                 if (key === 'furigana') resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif');
                 if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
                 if (key === 'meaning') resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs');
-                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed');
+                if (key === 'connection') resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
                 card[key] = newText;
             };
         }
@@ -404,48 +389,18 @@
             const furigana = document.getElementById('vFurigana').value.trim();
             const translation = document.getElementById('vTranslation').value.trim();
             const meaning = document.getElementById('vMeaning').value.trim();
+            const connection = document.getElementById('vConnection').value.trim();
             const memo = document.getElementById('vMemo').value.trim();
             if (!word || !translation) return alert("智能提取失败或未填全。请至少保证有日语语法点与中文翻译项。");
 
             localVocabDB.push({ 
                 id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), 
-                word, level, furigana, translation, meaning, memo, stage: 0, lastTime: Date.now() 
+                word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() 
             });
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
             
-            ['vWord','vFurigana','vTranslation','vMeaning','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
+            ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
             refreshEngineState();
-        }
-
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = function() {};
-        }
-
-        function exportBackupData() {
-            if(localVocabDB.length === 0) return;
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
-            const dl = document.createElement('a');
-            dl.setAttribute("href", dataStr);
-            dl.setAttribute("download", `N5-N2自查文法备份_${Date.now()}.json`);
-            dl.click();
-        }
-
-        function importBackupData(input) {
-            const file = input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (Array.isArray(data)) {
-                        if (confirm(`导入 ${data.length} 条记录？`)) {
-                            localVocabDB = data;
-                            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                            refreshEngineState();
-                        }
-                    }
-                } catch(err) { alert("文件解析失败。"); }
-            };
-            reader.readAsText(file);
         }
     </script>
 </body>

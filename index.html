@@ -25,11 +25,11 @@
             <div>
                 <div class="w-12 h-0.5 bg-sky-400 mb-2"></div>
                 <h3 class="text-xl font-bold tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1">自动周期机制：已优化自由贴入算法，多行长文本支持无损顺序兜底，完美容纳超长接续与听抄原句。</p>
+                <p class="text-xs text-slate-300 mt-1">自动周期机制：今日任务学完可一键开启「再次学习」，底部集成「整体全量题库」自由点播自查。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-blue-900/50 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
-                    <span class="block text-[10px] font-black text-rose-300 tracking-wider mb-1 uppercase">🚨 今日截止需复习</span>
+                    <span class="block text-[10px] font-black text-rose-300 tracking-wider mb-1 uppercase" id="dueTitle">🚨 今日截止需复习</span>
                     <span class="text-4xl font-black tracking-tighter text-rose-400" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
                 </div>
                 <div class="text-center md:text-left border-l border-blue-900/60 pl-8">
@@ -47,7 +47,7 @@
                     
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1.5">
                         <label class="block text-[11px] font-black text-[#1E3A8A]">✨ 自由乱序输入/粘贴框</label>
-                        <textarea id="vSmartPaste" rows="5" oninput="handleSmartSplit()" placeholder="直接把听抄的整段文本糊在这里，多行回车输入体验极佳..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
+                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把听抄的整段文本糊在这里，下方全自动进行分流特征识别..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -105,7 +105,7 @@
 
             <div class="lg:col-span-7 bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col min-h-[480px] md:min-h-[540px] order-1 lg:order-2">
                 <div class="border-b border-slate-100 pb-3 mb-6 flex justify-between items-center">
-                    <span class="text-xs font-black tracking-widest text-[#1E3A8A] uppercase">02 / MEMORY COCKPIT (智能自查舱)</span>
+                    <span class="text-xs font-black tracking-widest text-[#1E3A8A] uppercase" id="cockpitTitle">02 / MEMORY COCKPIT (智能自查舱)</span>
                     <div class="flex items-center gap-4">
                         <button onclick="deleteCurrentCard()" id="deleteBtn" class="text-[10px] font-bold text-slate-300 hover:text-red-600 transition cursor-pointer hidden">
                             🗑️ 删除此条
@@ -115,8 +115,11 @@
                 </div>
 
                 <div id="cardCockpit" class="flex-1 flex flex-col justify-between space-y-8">
-                    <div id="emptyState" class="text-center py-20 italic text-slate-400 text-xs">
-                        🎉 太棒了！当前待自查复习的语法点已通关清零！
+                    <div id="emptyState" class="text-center py-16 flex flex-col items-center justify-center space-y-4 hidden">
+                        <span class="text-xs italic text-slate-400">🎉 太棒了！今日截止的所有艾宾浩斯过关任务已全部打卡清零！</span>
+                        <button onclick="startInfiniteReviewMode()" class="px-6 py-3 bg-[#1E3A8A] text-white hover:bg-blue-900 font-bold text-xs rounded-xl shadow-md transition cursor-pointer flex items-center gap-2">
+                            🔄 开启无限自由复习 / 再次学习
+                        </button>
                     </div>
 
                     <div id="activeCard" class="space-y-6 flex-1 flex flex-col justify-between hidden">
@@ -170,61 +173,390 @@
             </div>
 
         </div>
+
+        <div class="w-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-2">
+            <div class="bg-slate-100 px-5 py-4 flex justify-between items-center border-b border-slate-200 cursor-pointer" onclick="toggleDatabasePanel()">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-black text-[#1E3A8A] uppercase tracking-wider">📚 WHOLE GRAMMAR DATABASE (整体文法全量题库)</span>
+                    <span class="text-[10px] bg-blue-100 text-[#1E3A8A] font-bold px-2 py-0.5 rounded-full" id="dbTotalBadge">0 条</span>
+                </div>
+                <span id="foldArrow" class="text-xs font-bold text-slate-400 transition-transform">展开 ➕</span>
+            </div>
+            <div id="databasePanelBody" class="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden max-h-[600px] overflow-y-auto no-scrollbar bg-slate-50/50">
+                </div>
+        </div>
+
     </div>
 
     <script>
         const EBBINGHAUS_INTERVALS = [0, 1, 24, 72, 168, 360];
         let localVocabDB = []; let dueCardsPool = []; let currentIndex = 0; let isRevealedStatus = false;
+        let isInfiniteReviewMode = false; // 💡 独立状态看门狗：是否开启了“再次学习”自由复习模式
 
         window.onload = function() {
             initVocabEngine();
         };
 
-        // 💡 升级加固版：启发式特征捕捉 + 多行顺序兜底对齐算法
         function handleSmartSplit() {
             const rawText = document.getElementById('vSmartPaste').value;
             if (!rawText.trim()) return;
 
-            // 按换行或显式符号切分
             let chunks = rawText.split('\n').map(c => c.trim()).filter(c => c.length > 0);
-            
-            // 如果用户没有用换行，而是用了标点，切换标点切割
             if (chunks.length <= 1) {
                 chunks = rawText.split(/[\uff0c,；;／\/|\t]/).map(c => c.trim()).filter(c => c.length > 0);
             }
-
             if (chunks.length === 0) return;
 
             let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dConnection = [], dMemo = "";
-
             const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
             const hasChinese = /[\u4e00-\u9fa5]/;
 
-            // 💡 策略一：首先尝试按精准逻辑特征抓取
             chunks.forEach((chunk) => {
-                // 判定长例句：含日语，字数长，或带有明显的逗顿号
                 if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 15) && !hasChinese.test(chunk)) {
                     if (!dMemo) { dMemo = chunk; return; }
                 }
-                // 判定核心语法词
                 if (hasJapanese.test(chunk) && chunk.length <= 12 && !hasChinese.test(chunk)) {
                     if (!dWord) { dWord = chunk; return; }
                     if (dWord && !dFurigana) { dFurigana = chunk; return; }
                 }
-                // 核心中文翻译（简短核心）
                 if (hasChinese.test(chunk) && chunk.length <= 10 && !chunk.includes('+') && !chunk.includes('＋')) {
                     if (!dTranslation) { dTranslation = chunk; return; }
                 }
-                // 接续逻辑：只要含有公式符号或接续代表词，一律推入接续池
-                if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干')) {
-                    dConnection.push(chunk);
-                    return;
+                if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干')) {
+                    dConnection.push(chunk); return;
                 }
-                // 语法解释说明
                 if (hasChinese.test(chunk) && chunk.length > 10) {
                     if (!dMeaning) { dMeaning = chunk; return; }
                 }
             });
 
-            // 💡 策略二：强力无损兜底机制。如果你输入的内容行数非常规整（比如你刚才输入的格式），直接启动行数绝对映射！
-            if (chunks.length >= 5 &&
+            if (chunks.length >= 5 && (!dWord || !dTranslation || dConnection.length === 0 || !dMemo)) {
+                dWord = chunks[0]; dFurigana = chunks[1]; dTranslation = chunks[2]; dMeaning = chunks[3];
+                let connList = [];
+                for(let i = 4; i < chunks.length - 1; i++) connList.push(chunks[i]);
+                dConnection = connList;
+                dMemo = chunks[chunks.length - 1];
+            }
+
+            if (dWord) document.getElementById('vWord').value = dWord;
+            document.getElementById('vFurigana').value = dFurigana;
+            if (dTranslation) document.getElementById('vTranslation').value = dTranslation;
+            document.getElementById('vMeaning').value = dMeaning;
+            document.getElementById('vConnection').value = dConnection.join('\n');
+            if (dMemo) document.getElementById('vMemo').value = dMemo;
+        }
+
+        function initVocabEngine() {
+            let data = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
+            if (!data) {
+                data = localStorage.getItem('MZ_JAP_VOCAB_DB'); 
+                if (data) { localStorage.setItem('MZ_JAP_GRAMMAR_DB', data); }
+            }
+            localVocabDB = data ? JSON.parse(data) : [];
+            refreshEngineState();
+            if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
+        }
+
+        function speakJapanese(customText) {
+            if (!('speechSynthesis' in window)) return;
+            if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
+
+            let textToSpeak = "";
+            if (customText) {
+                textToSpeak = customText; // 支持列表直接点播发音
+            } else {
+                const card = dueCardsPool[currentIndex];
+                if (!card) return;
+                textToSpeak = card.word;
+                if (isRevealedStatus && card.memo && card.memo !== '暂无详细笔记。') {
+                    textToSpeak += "。 " + card.memo;
+                }
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'ja-JP';
+            const voices = window.speechSynthesis.getVoices();
+            let selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Natural') || v.name.includes('Online')));
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && v.name.includes('Google'));
+            if (selectedVoice) utterance.voice = selectedVoice;
+
+            utterance.rate = 0.82; 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 🧠 艾宾浩斯智能计算跑数
+        function refreshEngineState() {
+            const now = Date.now();
+            
+            // 如果不是“再次学习自由复习”模式，严格执行艾宾浩斯拦截
+            if (!isInfiniteReviewMode) {
+                document.getElementById('dueTitle').innerText = "🚨 今日截止需复习";
+                document.getElementById('cockpitTitle').innerText = "02 / MEMORY COCKPIT (智能自查舱)";
+                dueCardsPool = [];
+                localVocabDB.forEach(item => {
+                    const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
+                    const currentStage = item.stage || 0;
+                    if (currentStage < EBBINGHAUS_INTERVALS.length) {
+                        const req = EBBINGHAUS_INTERVALS[currentStage];
+                        if (hoursPassed >= req) dueCardsPool.push(item);
+                    }
+                });
+                document.getElementById('dueCount').innerText = dueCardsPool.length;
+            } else {
+                // 如果开启了「再次学习/自由复习」模式，直接把全量大题库打乱灌装进来
+                document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
+                document.getElementById('dueCount').innerText = dueCardsPool.length;
+            }
+
+            document.getElementById('totalCount').innerText = localVocabDB.length;
+            document.getElementById('dbTotalBadge').innerText = `${localVocabDB.length} 条`;
+            
+            renderActiveCard();
+            renderWholeDatabaseList(); // 联动刷新底部的整体题库
+        }
+
+        // 💡 开启无限再次学习模式
+        function startInfiniteReviewMode() {
+            if (localVocabDB.length === 0) { alert("文法库中目前空空如也，请先在左侧录入内容。"); return; }
+            isInfiniteReviewMode = true;
+            // 复制题库大数组，并执行洗牌算法（Shuffle）打乱顺序
+            dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            document.getElementById('cockpitTitle').innerText = "🔄 智能自查舱 (再次学习·乱序通关模式)";
+            refreshEngineState();
+        }
+
+        function renderActiveCard() {
+            const emptyState = document.getElementById('emptyState');
+            const activeCard = document.getElementById('activeCard');
+            const cardIndexText = document.getElementById('cardIndexText');
+            const deleteBtn = document.getElementById('deleteBtn');
+
+            if (dueCardsPool.length === 0) {
+                emptyState.classList.remove('hidden');
+                activeCard.classList.add('hidden');
+                deleteBtn.classList.add('hidden');
+                cardIndexText.innerText = "0 / 0";
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            activeCard.classList.remove('hidden');
+            deleteBtn.classList.remove('hidden'); 
+            
+            if (currentIndex >= dueCardsPool.length) {
+                if (isInfiniteReviewMode) {
+                    // 如果无限模式刷完了最后一题，自动重新洗牌循环
+                    dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+                }
+                currentIndex = 0;
+            }
+            cardIndexText.innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
+
+            const card = dueCardsPool[currentIndex];
+            document.getElementById('cardLevel').innerText = card.level;
+            document.getElementById('cardWord').innerText = card.word;
+            isRevealedStatus = false;
+            
+            resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
+            resetDOM('cardTranslationContainer', card.translation || card.meaning || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
+            resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
+            resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
+
+            document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
+            document.getElementById('triggerBtnBox').classList.remove('hidden');
+            document.getElementById('decisionBox').classList.add('hidden');
+        }
+
+        function resetDOM(id, text, cls) {
+            const el = document.getElementById(id);
+            if(el) el.innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
+        }
+
+        function revealCard() {
+            document.getElementById('blurWrapper').className = "transition-all duration-300";
+            document.getElementById('triggerBtnBox').classList.add('hidden');
+            document.getElementById('decisionBox').classList.remove('hidden');
+            isRevealedStatus = true;
+        }
+
+        function makeEditable(key) {
+            if (!isRevealedStatus) return;
+            const card = dueCardsPool[currentIndex];
+            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'translation' ? 'cardTranslationContainer' : (key === 'meaning' ? 'cardMeaningContainer' : (key === 'connection' ? 'cardConnectionContainer' : 'cardMemoContainer')));
+            
+            const container = document.getElementById(id);
+            if (container.querySelector('input') || container.querySelector('textarea')) return;
+
+            let val = card[key] || "";
+            let el = (key === 'memo' || key === 'connection') ? `<textarea class="live-edit-input text-xs" rows="3">${val}</textarea>` : `<input type="text" class="live-edit-input" value="${val}" />`;
+            container.innerHTML = el;
+            const input = container.children[0];
+            input.focus();
+
+            input.onblur = function() {
+                const newText = input.value.trim();
+                const matched = localVocabDB.find(i => i.id === card.id);
+                if (matched) {
+                    matched[key] = newText;
+                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                }
+                if (key === 'furigana') resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif');
+                if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
+                if (key === 'meaning') resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs');
+                if (key === 'connection') resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
+                card[key] = newText;
+            };
+        }
+
+        function handleDecision(yes) {
+            const card = dueCardsPool[currentIndex];
+            const matched = localVocabDB.find(i => i.id === card.id);
+
+            if (matched) {
+                // 如果在“再次学习自由复习”模式，点击不计入严肃的艾宾浩斯贬职惩罚，仅推动指针往下跳
+                if (!isInfiniteReviewMode) {
+                    matched.stage = yes ? (matched.stage || 0) + 1 : 1;
+                    matched.lastTime = Date.now();
+                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                }
+                
+                currentIndex++;
+                refreshEngineState();
+            }
+        }
+
+        function deleteCurrentCard() {
+            const card = dueCardsPool[currentIndex];
+            if (!card) return;
+            if (confirm(`⚠️ 确定要从系统文法库中彻底删除【${card.word}】吗？`)) {
+                localVocabDB = localVocabDB.filter(item => item.id !== card.id);
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                alert("🗑️ 该记录已成功销毁。");
+                if (currentIndex > 0) currentIndex--;
+                refreshEngineState();
+            }
+        }
+
+        // 💡 智能渲染全量整体题库活页本
+        function renderWholeDatabaseList() {
+            const container = document.getElementById('databasePanelBody');
+            container.innerHTML = "";
+
+            if (localVocabDB.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-8 text-center text-xs text-slate-400 italic">文法库目前空空如也，请在上方录入第一条日语语法。</div>`;
+                return;
+            }
+
+            localVocabDB.forEach((item) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#1E3A8A] transition-all";
+                
+                // 拼接语音文本（语法点+例句）
+                let jaAudioText = item.word;
+                if(item.memo && item.memo !== '暂无详细笔记。') jaAudioText += "。" + item.memo;
+
+                cardEl.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">${item.level}</span>
+                            <div class="flex gap-2">
+                                <button onclick="speakJapanese('${jaAudioText}')" class="text-xs hover:scale-110 transition cursor-pointer" title="点播发音">🔊</button>
+                                <button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#1E3A8A] transition cursor-pointer" title="送进自查舱独立背诵">➔</button>
+                            </div>
+                        </div>
+                        <h4 class="font-serif font-bold text-slate-900 text-lg">${item.word}</h4>
+                        <div class="text-[11px] text-slate-400 font-serif">汉字：<span class="text-slate-700 font-bold">${item.furigana || '无'}</span></div>
+                        <div class="text-xs text-blue-900 font-bold">翻译：<span>${item.translation || '未填写'}</span></div>
+                        <div class="text-[11px] text-slate-500">解释：<span>${item.meaning || '无'}</span></div>
+                        <div class="text-[11px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded border border-slate-100 whitespace-pre-wrap">接续：${item.connection || '无'}</div>
+                        <div class="text-[11px] text-slate-600 italic bg-blue-50/40 p-1.5 rounded border border-blue-50/50 whitespace-pre-wrap">例句：${item.memo || '无'}</div>
+                    </div>
+                `;
+                container.appendChild(cardEl);
+            });
+        }
+
+        // 💡 题库看板特权：强制把特定错题送进右侧自查舱进行单独训练
+        function forceFocusCard(id) {
+            const matched = localVocabDB.find(i => i.id === id);
+            if (matched) {
+                isInfiniteReviewMode = true; // 劫持状态
+                dueCardsPool = [matched];
+                currentIndex = 0;
+                document.getElementById('cockpitTitle').innerText = "🎯 独立专项自查突击中";
+                window.scrollTo({ top: 300, behavior: 'smooth' }); // 平滑滚动聚焦
+                refreshEngineState();
+            }
+        }
+
+        // 题库折叠看门狗
+        function toggleDatabasePanel() {
+            const body = document.getElementById('databasePanelBody');
+            const arrow = document.getElementById('foldArrow');
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                arrow.innerText = "折叠 ➖";
+            } else {
+                body.classList.add('hidden');
+                arrow.innerText = "展开 ➕";
+            }
+        }
+
+        function saveNewVocab() {
+            const word = document.getElementById('vWord').value.trim();
+            const level = document.getElementById('vLevel').value;
+            const furigana = document.getElementById('vFurigana').value.trim();
+            const translation = document.getElementById('vTranslation').value.trim();
+            const meaning = document.getElementById('vMeaning').value.trim();
+            const connection = document.getElementById('vConnection').value.trim();
+            const memo = document.getElementById('vMemo').value.trim();
+            if (!word || !translation) return alert("请检查，日语语法点与中文翻译项为必填核心项。");
+
+            localVocabDB.push({ 
+                id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), 
+                word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() 
+            });
+            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+            
+            ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
+            
+            // 💡 如果在自由复习中录入了新词，全自动无感阻断重载，确保新词立刻躺进大题库
+            if(isInfiniteReviewMode) {
+                dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+            }
+            refreshEngineState();
+        }
+
+        function exportBackupData() {
+            if(localVocabDB.length === 0) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `N5-N2自查文法备份_${Date.now()}.json`);
+            dl.click();
+        }
+
+        function importBackupData(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data)) {
+                        if (confirm(`导入 ${data.length} 条记录？`)) {
+                            localVocabDB = data;
+                            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                            isInfiniteReviewMode = false; // 重置
+                            refreshEngineState();
+                        }
+                    }
+                } catch(err) { alert("文件解析失败。"); }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>

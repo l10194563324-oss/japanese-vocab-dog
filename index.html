@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-sky-400 mb-2"></div>
                 <h3 class="text-xl font-bold tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1">自动周期机制：数据安全修复版。已集成超强容错数据打捞接引引擎，终结卡死与储备丢失异常。</p>
+                <p class="text-xs text-slate-300 mt-1">自动周期机制：发音引擎已全面复活复位。支持多终端高保真纯净日文真人发音朗读。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-blue-900/50 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -128,7 +128,7 @@
                                 <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-blue-50 text-[#1E3A8A] rounded">N3</span>
                                 <h1 id="cardWord" class="text-3xl md:text-4xl font-black font-serif tracking-wide text-slate-900 pt-2 break-words">加载中...</h1>
                             </div>
-                            <button onclick="speakJapanese()" class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold text-slate-700 cursor-pointer transition shadow-sm flex items-center gap-1.5 shrink-0" title="朗读纯正日文原音">
+                            <button onclick="speakJapanese('')" class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold text-slate-700 cursor-pointer transition shadow-sm flex items-center gap-1.5 shrink-0" title="朗读纯正日文原音">
                                 🔊 朗读原音
                             </button>
                         </div>
@@ -194,6 +194,7 @@
         let isInfiniteReviewMode = false;
 
         window.onload = function() {
+            document.getElementById('appContainer').style.display = 'block';
             initVocabEngine();
         };
 
@@ -246,34 +247,19 @@
             if (dMemo) document.getElementById('vMemo').value = dMemo;
         }
 
-        // 🧠 核心加固打捞修复引擎
         function initVocabEngine() {
             let rawData = null;
-            
-            // 1. 采用高安全性的 try-catch 矩阵，盲扫所有历史存储位置，防止报错中断
-            try { rawData = localStorage.getItem('MZ_JAP_GRAMMAR_DB'); } catch(e) { console.log(e); }
-            if (!rawData) { try { rawData = localStorage.getItem('MZ_JAP_VOCAB_DB'); } catch(e) { console.log(e); } }
-            if (!rawData) { try { rawData = localStorage.getItem('MZ_JAP_VOCAB_DB_TEMP'); } catch(e) { console.log(e); } }
+            try { rawData = localStorage.getItem('MZ_JAP_GRAMMAR_DB'); } catch(e) {}
+            if (!rawData) { try { rawData = localStorage.getItem('MZ_JAP_VOCAB_DB'); } catch(e) {} }
+            if (!rawData) { try { rawData = localStorage.getItem('MZ_JAP_VOCAB_DB_TEMP'); } catch(e) {} }
 
             let parsedDB = [];
-            if (rawData) {
-                try {
-                    parsedDB = JSON.parse(rawData);
-                } catch(e) {
-                    console.error("JSON解析失败，尝试清洗异常流", e);
-                }
-            }
-            
+            if (rawData) { try { parsedDB = JSON.parse(rawData); } catch(e) {} }
             localVocabDB = Array.isArray(parsedDB) ? parsedDB : [];
             
-            // 2. 超强容错数据清洗与引渡：强制标准化，确保绝对不会产生卡死异常
             localVocabDB = localVocabDB.map(item => {
                 if (!item || typeof item !== 'object') return null;
-                
-                // 如果老数据只有 meaning 解释而没有规范的独立翻译项，执行安全引渡
-                if (!item.translation) {
-                    item.translation = item.meaning || item.word || "未指定翻译";
-                }
+                if (!item.translation) item.translation = item.meaning || item.word || "未指定翻译";
                 if (!item.meaning) item.meaning = "暂无详细功能解释。";
                 if (!item.connection) item.connection = "暂无接续规则。";
                 if (!item.memo) item.memo = "暂无详细笔记。";
@@ -281,47 +267,56 @@
                 if (typeof item.stage === 'undefined') item.stage = 0;
                 if (!item.lastTime) item.lastTime = Date.now();
                 if (!item.id) item.id = 'g_' + Math.random().toString(36).substr(2, 9);
-                
                 return item;
-            }).filter(item => item !== null && item.word); // 剔除彻底损坏的空项目
+            }).filter(item => item !== null && item.word);
 
-            // 3. 将打捞并标准化完毕的数据重新灌回标准的最新文法库总线中
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-
             refreshEngineState();
             if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
         }
 
+        // 🔊 彻底修复校准后的纯净高保真 TTS 朗读函数
         function speakJapanese(customText) {
-            if (!('speechSynthesis' in window)) return;
+            if (!('speechSynthesis' in window)) { alert("当前浏览器或微信环境不支持TTS语音朗读功能。"); return; }
             if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
 
             let textToSpeak = "";
+            
+            // 💡 修复重点：如果传递了参数（比如题库列表里的点播），直接采用；如果没有（右侧自查舱触发），则动态抓取当前卡片字段
             if (customText) {
                 textToSpeak = customText;
             } else {
                 const card = dueCardsPool[currentIndex];
                 if (!card) return;
                 textToSpeak = card.word;
+                // 如果翻开牌了，并且例句不是默认提示，把例句也优雅地串联读出来
                 if (isRevealedStatus && card.memo && card.memo !== '暂无详细笔记。') {
                     textToSpeak += "。 " + card.memo;
                 }
             }
 
+            if (!textToSpeak.trim()) return;
+
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             utterance.lang = 'ja-JP';
+
+            // 智能检索并切回最高保真的真人/神经网络音包
             const voices = window.speechSynthesis.getVoices();
             let selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Natural') || v.name.includes('Online')));
             if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && v.name.includes('Google'));
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Premium') || v.name.includes('Kyoko') || v.name.includes('Ichiro')));
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP'));
+
             if (selectedVoice) utterance.voice = selectedVoice;
 
-            utterance.rate = 0.82; 
+            utterance.rate = 0.82; // 完美的仿生听抄复现语速
+            utterance.pitch = 1.0;
+
             window.speechSynthesis.speak(utterance);
         }
 
         function refreshEngineState() {
             const now = Date.now();
-            
             if (!isInfiniteReviewMode) {
                 document.getElementById('dueTitle').innerText = "🚨 今日截止需复习";
                 document.getElementById('cockpitTitle').innerText = "02 / MEMORY COCKPIT (智能自查舱)";
@@ -342,7 +337,6 @@
 
             document.getElementById('totalCount').innerText = localVocabDB.length;
             document.getElementById('dbTotalBadge').innerText = `${localVocabDB.length} 条`;
-            
             renderActiveCard();
             renderWholeDatabaseList(); 
         }
@@ -474,8 +468,9 @@
             localVocabDB.forEach((item) => {
                 const cardEl = document.createElement('div');
                 cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#1E3A8A] transition-all";
-                let jaAudioText = item.word;
-                if(item.memo && item.memo !== '暂无详细笔记。') jaAudioText += "。" + item.memo;
+                
+                // 💡 修复发音拼读：列表点播时，用单引号处理字符串，防止包含双引号或换行符导致按钮失效
+                let jaAudioText = (item.word + (item.memo && item.memo !== '暂无详细笔记。' ? '。' + item.memo : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
 
                 cardEl.innerHTML = `
                     <div class="space-y-1.5">

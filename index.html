@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-sky-400 mb-2"></div>
                 <h3 class="text-xl font-bold tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1">自动周期机制：免密秒载，新增【智能混合大文本框】，整段贴入全自动分流解析填充。</p>
+                <p class="text-xs text-slate-300 mt-1">自动周期机制：免密秒载，【智能语感分流】无需特定符号分隔，自由粘贴即可智能识别。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-blue-900/50 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -43,12 +43,12 @@
             
             <div class="lg:col-span-5 flex flex-col gap-6 order-2 lg:order-1">
                 <div class="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <span class="text-xs font-black tracking-widest text-[#1E3A8A] uppercase block border-b border-slate-100 pb-2">01 / SMART INPUT FLOW (全自动分流录入)</span>
+                    <span class="text-xs font-black tracking-widest text-[#1E3A8A] uppercase block border-b border-slate-100 pb-2">01 / SMART INPUT FLOW (自由无感录入)</span>
                     
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1.5">
-                        <label class="block text-[11px] font-black text-[#1E3A8A]">✨ 快捷智能混合贴入框</label>
-                        <textarea id="vSmartPaste" rows="3" oninput="handleSmartSplit()" placeholder="把整段文本粘在这里，用逗号、换行或斜杠隔开，下方会自动完成分流填坑..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
-                        <p class="text-[9px] text-slate-400">支持：`语法 , 汉字 , 翻译 , 解释 , 例句` 或直接多行粘贴。</p>
+                        <label class="block text-[11px] font-black text-[#1E3A8A]">✨ 自由乱序输入/粘贴框</label>
+                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="管它有没有标点，直接把中日文、例句整段糊在这里，下方全自动特征分流判定填充..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
+                        <p class="text-[9px] text-slate-400">💡 提示：系统会自动寻找日语短句做语法、长句做例句、中文做翻译解释。</p>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -173,33 +173,72 @@
             initVocabEngine();
         };
 
-        // 💡 核心升级点：文本智能分流拆解切割机
+        // 💡 升级核心：智能启发式无标点分流引擎
         function handleSmartSplit() {
             const rawText = document.getElementById('vSmartPaste').value;
             if (!rawText.trim()) return;
 
-            // 智能切割算法：支持逗号、中文分号、斜杠、或者直接换行符进行切割
-            let tokens = [];
-            if (rawText.includes('\n')) {
-                tokens = rawText.split('\n');
-            } else if (rawText.includes('，') || rawText.includes(',')) {
-                tokens = rawText.split(/[，,]/);
-            } else if (rawText.includes('/') || rawText.includes('／')) {
-                tokens = rawText.split(/[\/／]/);
-            } else {
-                // 如果什么分隔符都没有，直接默认全部当做“语法点”填入
-                tokens = [rawText];
-            }
+            // 1. 强力多维切分：不管用户输入换行、常见中日英文标点，统一揉碎变成干净的块列表 (chunks)
+            let chunks = rawText.split(/[\n，,；;／\/|\t]/)
+                                .map(c => c.trim())
+                                .filter(c => c.length > 0);
 
-            // 去除前后多余的空格
-            tokens = tokens.map(t => t.trim()).filter(t => t !== "");
+            if (chunks.length === 0) return;
 
-            // 按照位置全自动、零延迟填坑注入
-            if (tokens[0]) document.getElementById('vWord').value = tokens[0];
-            if (tokens[1]) document.getElementById('vFurigana').value = tokens[1];
-            if (tokens[2]) document.getElementById('vTranslation').value = tokens[2];
-            if (tokens[3]) document.getElementById('vMeaning').value = tokens[3];
-            if (tokens[4]) document.getElementById('vMemo').value = tokens[4];
+            // 预设重置五个底层输入框的值
+            let discoveredWord = "";
+            let discoveredFurigana = "";
+            let discoveredTranslation = "";
+            let discoveredMeaning = "";
+            let discoveredMemo = "";
+
+            // 正则定义特征
+            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/; // 包含日文字符(假名或日文汉字)
+            const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/; // 纯假名判定
+            const hasChinese = /[\u4e00-\u9fa5]/; // 包含中文汉字
+
+            // 遍历特征，智能抓取填坑
+            chunks.forEach((chunk, index) => {
+                
+                // A. 判定是否为“日语长句例句”（包含日文句号、或者长度大于12的纯日文字符流）
+                if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 12) && !hasChinese.test(chunk)) {
+                    if (!discoveredMemo) { discoveredMemo = chunk; return; }
+                }
+
+                // B. 判定是否为“日语核心语法/词汇”：必须含日文，且比较短（12字以内），且是全段最先出现的日语
+                if (hasJapanese.test(chunk) && chunk.length <= 12 && !hasChinese.test(chunk)) {
+                    if (!discoveredWord) {
+                        discoveredWord = chunk;
+                        return;
+                    }
+                    // 如果已经抓到了主语法词，而紧接着又来了一个短日语（且带括号或包含异体字汉字），则判定为“汉字标记”
+                    if (discoveredWord && !discoveredFurigana) {
+                        discoveredFurigana = chunk.replace(/[\(\)（）\[\]]/g, ""); // 剥离多余括号
+                        return;
+                    }
+                }
+
+                // C. 判定是否为“中文翻译”：包含中文汉字，且字数简短核心（8个字以内）
+                if (hasChinese.test(chunk) && chunk.length <= 8) {
+                    if (!discoveredTranslation) { discoveredTranslation = chunk; return; }
+                }
+
+                // D. 判定是否为“中文功能解释”：包含中文，且字数明显长（大于8个字），带有接续等长句特征
+                if (hasChinese.test(chunk) && chunk.length > 8) {
+                    if (!discoveredMeaning) { discoveredMeaning = chunk; return; }
+                }
+            });
+
+            // 兜底降级兜底网：如果刚才用启发式特征没填满，且用户输入的行数刚好对应，按原顺序补填
+            if (!discoveredWord && chunks[0]) discoveredWord = chunks[0];
+            if (!discoveredTranslation && chunks[1] && hasChinese.test(chunks[1])) discoveredTranslation = chunks[1];
+
+            // 最终落盘赋值给页面隐藏表单，实现秒级自动动态渲染
+            if (discoveredWord) document.getElementById('vWord').value = discoveredWord;
+            document.getElementById('vFurigana').value = discoveredFurigana;
+            if (discoveredTranslation) document.getElementById('vTranslation').value = discoveredTranslation;
+            document.getElementById('vMeaning').value = discoveredMeaning;
+            document.getElementById('vMemo').value = discoveredMemo;
         }
 
         function initVocabEngine() {
@@ -366,7 +405,7 @@
             const translation = document.getElementById('vTranslation').value.trim();
             const meaning = document.getElementById('vMeaning').value.trim();
             const memo = document.getElementById('vMemo').value.trim();
-            if (!word || !translation) return alert("请至少填写日语语法点与中文翻译项。");
+            if (!word || !translation) return alert("智能提取失败或未填全。请至少保证有日语语法点与中文翻译项。");
 
             localVocabDB.push({ 
                 id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), 
@@ -374,9 +413,12 @@
             });
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
             
-            // 清空所有框，包括智能混合大框
             ['vWord','vFurigana','vTranslation','vMeaning','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
             refreshEngineState();
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = function() {};
         }
 
         function exportBackupData() {

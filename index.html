@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-sky-400 mb-2"></div>
                 <h3 class="text-xl font-bold tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1">自动周期机制：免密秒载，接续规则已全线扩容为自动折行大文本舱，再长内容也完美装下。</p>
+                <p class="text-xs text-slate-300 mt-1">自动周期机制：已优化自由贴入算法，多行长文本支持无损顺序兜底，完美容纳超长接续与听抄原句。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-blue-900/50 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -47,7 +47,7 @@
                     
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1.5">
                         <label class="block text-[11px] font-black text-[#1E3A8A]">✨ 自由乱序输入/粘贴框</label>
-                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把听抄的整段文本糊在这里，下方全自动进行分流特征识别..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
+                        <textarea id="vSmartPaste" rows="5" oninput="handleSmartSplit()" placeholder="直接把听抄的整段文本糊在这里，多行回车输入体验极佳..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -78,7 +78,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">接续规则 (支持自动多行换行)</label>
-                        <textarea id="vConnection" rows="2" placeholder="例: 动词辞书形/た形/ない形＋とともに&#10;名词＋にともなって" class="w-full p-2.5 rounded-lg text-xs text-slate-600 leading-relaxed"></textarea>
+                        <textarea id="vConnection" rows="3" class="w-full p-2.5 rounded-lg text-xs text-slate-600 leading-relaxed"></textarea>
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">听抄日文例句/场景备注</label>
@@ -180,228 +180,51 @@
             initVocabEngine();
         };
 
+        // 💡 升级加固版：启发式特征捕捉 + 多行顺序兜底对齐算法
         function handleSmartSplit() {
             const rawText = document.getElementById('vSmartPaste').value;
             if (!rawText.trim()) return;
 
-            let chunks = rawText.split(/[\n，,；;／\/|\t]/).map(c => c.trim()).filter(c => c.length > 0);
+            // 按换行或显式符号切分
+            let chunks = rawText.split('\n').map(c => c.trim()).filter(c => c.length > 0);
+            
+            // 如果用户没有用换行，而是用了标点，切换标点切割
+            if (chunks.length <= 1) {
+                chunks = rawText.split(/[\uff0c,；;／\/|\t]/).map(c => c.trim()).filter(c => c.length > 0);
+            }
+
             if (chunks.length === 0) return;
 
-            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dConnection = "", dMemo = "";
+            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dConnection = [], dMemo = "";
 
             const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
             const hasChinese = /[\u4e00-\u9fa5]/;
 
+            // 💡 策略一：首先尝试按精准逻辑特征抓取
             chunks.forEach((chunk) => {
-                if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 12) && !hasChinese.test(chunk)) {
+                // 判定长例句：含日语，字数长，或带有明显的逗顿号
+                if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 15) && !hasChinese.test(chunk)) {
                     if (!dMemo) { dMemo = chunk; return; }
                 }
+                // 判定核心语法词
                 if (hasJapanese.test(chunk) && chunk.length <= 12 && !hasChinese.test(chunk)) {
                     if (!dWord) { dWord = chunk; return; }
-                    if (dWord && !dFurigana) { dFurigana = chunk.replace(/[\(\)（）\[\]]/g, ""); return; }
+                    if (dWord && !dFurigana) { dFurigana = chunk; return; }
                 }
-                if (hasChinese.test(chunk) && chunk.length <= 8) {
+                // 核心中文翻译（简短核心）
+                if (hasChinese.test(chunk) && chunk.length <= 10 && !chunk.includes('+') && !chunk.includes('＋')) {
                     if (!dTranslation) { dTranslation = chunk; return; }
                 }
-                if (chunk.length > 6) {
-                    if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('辞书') || chunk.includes('た形') || chunk.includes('ない形')) {
-                        if (!dConnection) { dConnection = chunk; return; }
-                    } else if (hasChinese.test(chunk)) {
-                        if (!dMeaning) { dMeaning = chunk; return; }
-                    }
+                // 接续逻辑：只要含有公式符号或接续代表词，一律推入接续池
+                if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干')) {
+                    dConnection.push(chunk);
+                    return;
+                }
+                // 语法解释说明
+                if (hasChinese.test(chunk) && chunk.length > 10) {
+                    if (!dMeaning) { dMeaning = chunk; return; }
                 }
             });
 
-            if (!dWord && chunks[0]) dWord = chunks[0];
-            if (!dTranslation && chunks[1] && hasChinese.test(chunks[1])) dTranslation = chunks[1];
-
-            if (dWord) document.getElementById('vWord').value = dWord;
-            document.getElementById('vFurigana').value = dFurigana;
-            if (dTranslation) document.getElementById('vTranslation').value = dTranslation;
-            document.getElementById('vMeaning').value = dMeaning;
-            document.getElementById('vConnection').value = dConnection;
-            document.getElementById('vMemo').value = dMemo;
-        }
-
-        function initVocabEngine() {
-            let data = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
-            if (!data) {
-                data = localStorage.getItem('MZ_JAP_VOCAB_DB'); 
-                if (data) { localStorage.setItem('MZ_JAP_GRAMMAR_DB', data); }
-            }
-            localVocabDB = data ? JSON.parse(data) : [];
-            refreshEngineState();
-            if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
-        }
-
-        function speakJapanese() {
-            if (!('speechSynthesis' in window)) { alert("当前浏览器不支持语音合成功能。"); return; }
-            if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
-
-            const card = dueCardsPool[currentIndex];
-            if (!card) return;
-
-            let textToSpeak = card.word;
-            if (isRevealedStatus && card.memo && card.memo !== '暂无详细笔记。') {
-                textToSpeak += "。 " + card.memo;
-            }
-
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = 'ja-JP';
-
-            const voices = window.speechSynthesis.getVoices();
-            let selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Natural') || v.name.includes('Online')));
-            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && v.name.includes('Google'));
-            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Premium') || v.name.includes('Kyoko') || v.name.includes('Ichiro')));
-            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP'));
-
-            if (selectedVoice) utterance.voice = selectedVoice;
-            utterance.rate = 0.82; 
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function refreshEngineState() {
-            const now = Date.now();
-            dueCardsPool = [];
-            localVocabDB.forEach(item => {
-                const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
-                const currentStage = item.stage || 0;
-                if (currentStage < EBBINGHAUS_INTERVALS.length) {
-                    const req = EBBINGHAUS_INTERVALS[currentStage];
-                    if (hoursPassed >= req) dueCardsPool.push(item);
-                }
-            });
-            document.getElementById('totalCount').innerText = localVocabDB.length;
-            document.getElementById('dueCount').innerText = dueCardsPool.length;
-            renderActiveCard();
-        }
-
-        function renderActiveCard() {
-            const emptyState = document.getElementById('emptyState');
-            const activeCard = document.getElementById('activeCard');
-            const cardIndexText = document.getElementById('cardIndexText');
-            const deleteBtn = document.getElementById('deleteBtn');
-
-            if (dueCardsPool.length === 0) {
-                emptyState.classList.remove('hidden');
-                activeCard.classList.add('hidden');
-                deleteBtn.classList.add('hidden');
-                cardIndexText.innerText = "0 / 0";
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            activeCard.classList.remove('hidden');
-            deleteBtn.classList.remove('hidden'); 
-            
-            if (currentIndex >= dueCardsPool.length) currentIndex = 0;
-            cardIndexText.innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
-
-            const card = dueCardsPool[currentIndex];
-            document.getElementById('cardLevel').innerText = card.level;
-            document.getElementById('cardWord').innerText = card.word;
-            isRevealedStatus = false;
-            
-            resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
-            resetDOM('cardTranslationContainer', card.translation || card.meaning || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
-            resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
-            
-            // 💡 渲染优化：接续规则支持换行原味呈现
-            resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
-            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
-
-            document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
-            document.getElementById('triggerBtnBox').classList.remove('hidden');
-            document.getElementById('decisionBox').classList.add('hidden');
-        }
-
-        function resetDOM(id, text, cls) {
-            document.getElementById(id).innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
-        }
-
-        function revealCard() {
-            document.getElementById('blurWrapper').className = "transition-all duration-300";
-            document.getElementById('triggerBtnBox').classList.add('hidden');
-            document.getElementById('decisionBox').classList.remove('hidden');
-            isRevealedStatus = true;
-        }
-
-        function makeEditable(key) {
-            if (!isRevealedStatus) return;
-            const card = dueCardsPool[currentIndex];
-            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'translation' ? 'cardTranslationContainer' : (key === 'meaning' ? 'cardMeaningContainer' : (key === 'connection' ? 'cardConnectionContainer' : 'cardMemoContainer')));
-            
-            const container = document.getElementById(id);
-            if (container.querySelector('input') || container.querySelector('textarea')) return;
-
-            let val = card[key] || "";
-            if(key === 'translation' && !card.translation && card.meaning) val = card.meaning;
-
-            // 💡 原地修改进化：如果点击的是例句（memo）或者接续规则（connection），全自动召唤多行大文本框，其余用普通 input
-            let el = (key === 'memo' || key === 'connection') ? `<textarea class="live-edit-input text-xs" rows="3">${val}</textarea>` : `<input type="text" class="live-edit-input" value="${val}" />`;
-            
-            container.innerHTML = el;
-            const input = container.children[0];
-            input.focus();
-
-            input.onblur = function() {
-                const newText = input.value.trim();
-                const matched = localVocabDB.find(i => i.id === card.id);
-                if (matched) {
-                    matched[key] = newText;
-                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                }
-                if (key === 'furigana') resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif');
-                if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
-                if (key === 'meaning') resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs');
-                if (key === 'connection') resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
-                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
-                card[key] = newText;
-            };
-        }
-
-        function handleDecision(yes) {
-            const card = dueCardsPool[currentIndex];
-            const matched = localVocabDB.find(i => i.id === card.id);
-            if (matched) {
-                matched.stage = yes ? (matched.stage || 0) + 1 : 1;
-                matched.lastTime = Date.now();
-                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                refreshEngineState();
-            }
-        }
-
-        function deleteCurrentCard() {
-            const card = dueCardsPool[currentIndex];
-            if (!card) return;
-            if (confirm(`⚠️ 确定要从系统文法库中彻底删除【${card.word}】吗？`)) {
-                localVocabDB = localVocabDB.filter(item => item.id !== card.id);
-                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                alert("🗑️ 该记录已成功销毁。");
-                if (currentIndex > 0) currentIndex--;
-                refreshEngineState();
-            }
-        }
-
-        function saveNewVocab() {
-            const word = document.getElementById('vWord').value.trim();
-            const level = document.getElementById('vLevel').value;
-            const furigana = document.getElementById('vFurigana').value.trim();
-            const translation = document.getElementById('vTranslation').value.trim();
-            const meaning = document.getElementById('vMeaning').value.trim();
-            const connection = document.getElementById('vConnection').value.trim();
-            const memo = document.getElementById('vMemo').value.trim();
-            if (!word || !translation) return alert("智能提取失败或未填全。请至少保证有日语语法点与中文翻译项。");
-
-            localVocabDB.push({ 
-                id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), 
-                word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() 
-            });
-            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-            
-            ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
-            refreshEngineState();
-        }
-    </script>
-</body>
-</html>
+            // 💡 策略二：强力无损兜底机制。如果你输入的内容行数非常规整（比如你刚才输入的格式），直接启动行数绝对映射！
+            if (chunks.length >= 5 &&

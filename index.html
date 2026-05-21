@@ -7,56 +7,56 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: -apple-system, "PingFang SC", "Hiragino Sans", "Yu Gothic", sans-serif; background-color: #F8FAFC; color: #1E293B; }
-        input, select, textarea { background-color: #FFFFFF; border: 1px solid #E2E8F0 !important; transition: all 0.15s ease; }
-        input:focus, select:focus, textarea:focus { border-color: #1E3A8A !important; box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.05); outline: none; }
+        input, select, textarea { background-color: #FFFFFF; border: 1px solid #E2E8F0 !important; transition: all 0.15s ease; border-radius: 6px; }
+        input:focus, select:focus, textarea:focus { border-color: #0F172A !important; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05); outline: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* ✏️ 原地快捷修改输入框样式 */
-        .live-edit-input { border: 1px dashed #3B82F6 !important; background-color: #FFF !important; padding: 4px 8px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #1E3A8A; line-height: 1.6; }
+        /* ✏️ 原地快捷修改大文本编辑舱样式 */
+        .live-edit-input { border: 1px dashed #3B82F6 !important; background-color: #FFF !important; padding: 4px 8px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #0F172A; line-height: 1.6; }
         .edit-hint { opacity: 0; transition: opacity 0.2s ease; cursor: pointer; }
         .editable-zone:hover .edit-hint { opacity: 0.6; }
     </style>
 </head>
-<body class="p-3 md:p-8 min-h-screen flex justify-center items-start">
+<body class="p-3 md:p-8 min-h-screen flex justify-center items-start bg-[#F8FAFC]">
 
     <div id="appContainer" class="w-full max-w-7xl flex flex-col gap-6 md:gap-8">
         
-        <div class="bg-[#1E3A8A] p-6 md:p-8 rounded-xl shadow-md text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div class="bg-[#0F172A] p-6 md:p-8 rounded-xl shadow-sm text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-                <div class="w-12 h-0.5 bg-sky-400 mb-2"></div>
-                <h3 class="text-xl font-bold tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1">云同步安全版：发音通道加装排堵断路器，彻底解决小喇叭无声、卡死、哑巴等异常现象。</p>
+                <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
+                <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：优化专属 6 行免公式自由分流算法，例句与中文翻译完美抱团入库。</p>
             </div>
-            <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-blue-900/50 w-full md:w-auto font-serif">
+            <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
                     <span class="block text-[10px] font-black text-rose-300 tracking-wider mb-1 uppercase" id="dueTitle">🚨 今日截止需复习</span>
                     <span class="text-4xl font-black tracking-tighter text-rose-400" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
                 </div>
-                <div class="text-center md:text-left border-l border-blue-900/60 pl-8">
+                <div class="text-center md:text-left border-l border-slate-800 pl-8">
                     <span class="block text-[10px] font-black text-sky-300 tracking-wider mb-1 uppercase">📦 语法库总储备</span>
                     <span class="text-4xl font-black tracking-tighter text-sky-200" id="totalCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
                 </div>
             </div>
         </div>
 
-        <div id="cloudConfigPanel" class="bg-blue-50 border border-blue-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 text-xs items-end">
+        <div id="cloudConfigPanel" class="bg-slate-100/80 border border-slate-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 text-xs items-end">
             <div>
-                <label class="block font-bold text-blue-900 mb-1">GitHub 用户名</label>
-                <input type="text" id="ghUser" placeholder="例如: l10194563324-oss" class="w-full p-2 rounded border">
+                <label class="block font-bold text-slate-700 mb-1">GitHub 用户名</label>
+                <input type="text" id="ghUser" placeholder="例如: l10194563324-oss" class="w-full p-2 border">
             </div>
             <div>
-                <label class="block font-bold text-blue-900 mb-1">仓库名称</label>
-                <input type="text" id="ghRepo" value="japanese-vocab-dog" class="w-full p-2 rounded border">
+                <label class="block font-bold text-slate-700 mb-1">仓库名称</label>
+                <input type="text" id="ghRepo" value="japanese-vocab-dog" class="w-full p-2 border">
             </div>
             <div>
-                <label class="block font-bold text-blue-900 mb-1">GitHub Token (钥匙)</label>
-                <input type="password" id="ghToken" placeholder="贴入 ghp_ 开头的Token" class="w-full p-2 rounded border">
+                <label class="block font-bold text-slate-700 mb-1">GitHub Token (钥匙)</label>
+                <input type="password" id="ghToken" placeholder="贴入 ghp_ 开头的Token" class="w-full p-2 border">
             </div>
             <div class="flex gap-2">
-                <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-blue-800 text-white font-bold rounded hover:bg-blue-900 cursor-pointer text-center">
+                <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 cursor-pointer text-center transition">
                     💾 绑定并云同步
                 </button>
-                <button onclick="fetchFromCloud(true)" class="py-2 px-3 bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700 cursor-pointer" title="手动从云端拉取最新数据">
+                <button onclick="fetchFromCloud(true)" class="py-2 px-3 bg-slate-600 text-white font-bold rounded-lg hover:bg-slate-700 cursor-pointer" title="从云端拉取最新数据">
                     🔄 拉取
                 </button>
             </div>
@@ -65,12 +65,12 @@
         <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
             
             <div class="lg:col-span-5 flex flex-col gap-6 order-2 lg:order-1">
-                <div class="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <span class="text-xs font-black tracking-widest text-[#1E3A8A] uppercase block border-b border-slate-100 pb-2">01 / SMART INPUT FLOW (自由无感录入)</span>
+                <div class="bg-white p-5 md:p-6 rounded-xl border border-slate-200/60 shadow-xs space-y-4">
+                    <span class="text-xs font-black tracking-widest text-[#0F172A] uppercase block border-b border-slate-100 pb-2 font-serif">01 / INPUT COCKPIT (自由轻量录入)</span>
                     
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1.5">
-                        <label class="block text-[11px] font-black text-[#1E3A8A]">✨ 自由乱序输入/粘贴框</label>
-                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把听抄的整段文本糊在这里，下方全自动进行分流特征识别..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700"></textarea>
+                    <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-1.5">
+                        <label class="block text-[11px] font-black text-[#0F172A]">✨ 你的专属贴入框（完美匹配听抄格式）</label>
+                        <textarea id="vSmartPaste" rows="5" oninput="handleSmartSplit()" placeholder="直接把你那 6 行内容贴在这里，日文例句和中文翻译会自动打包进最下方的例句大框里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -100,20 +100,20 @@
                         <input type="text" id="vMeaning" class="w-full p-2.5 rounded-lg text-xs text-slate-600">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">接续规则 (支持自动多行换行)</label>
-                        <textarea id="vConnection" rows="3" class="w-full p-2.5 rounded-lg text-xs text-slate-600 leading-relaxed"></textarea>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">接续规则</label>
+                        <textarea id="vConnection" rows="2" placeholder="非必填，若在大框贴入的内容包含【+】号会自动归类到此栏" class="w-full p-2.5 rounded-lg text-xs text-slate-600 leading-relaxed"></textarea>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">听抄日文例句/场景备注</label>
-                        <textarea id="vMemo" rows="2" class="w-full p-2.5 rounded-lg text-xs"></textarea>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">听抄日文例句与中文翻译（自动整合行）</label>
+                        <textarea id="vMemo" rows="3" placeholder="你输入的日文原句与中文译文会在这里自动合并换行显示" class="w-full p-2.5 rounded-lg text-xs text-slate-700 leading-relaxed font-sans"></textarea>
                     </div>
-                    <button onclick="saveNewVocab()" class="w-full text-xs font-black tracking-widest py-3 bg-[#1E3A8A] hover:bg-blue-900 text-white rounded-lg transition cursor-pointer shadow-sm">
+                    <button onclick="saveNewVocab()" class="w-full text-xs font-black tracking-widest py-3 bg-[#0F172A] hover:bg-slate-800 text-white rounded-lg transition cursor-pointer shadow-sm">
                         📥 安全存入自查文法库
                     </button>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-xs space-y-3">
-                    <span class="text-xs font-black tracking-widest text-slate-400 uppercase block">数据防置导出/保护盾</span>
+                <div class="bg-white p-4 rounded-xl border border-slate-200/60 shadow-xs text-xs space-y-3">
+                    <span class="text-xs font-black tracking-widest text-slate-400 uppercase block font-serif">DATA PROTECTION (数据保护盾)</span>
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="exportBackupData()" class="p-2 border border-dashed border-slate-300 rounded-lg text-center font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
                             📤 备份导出文法库
@@ -126,12 +126,12 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-7 bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col min-h-[480px] md:min-h-[540px] order-1 lg:order-2">
+            <div class="lg:col-span-7 bg-white p-5 md:p-6 rounded-xl border border-slate-200/60 shadow-xs flex flex-col min-h-[480px] md:min-h-[540px] order-1 lg:order-2">
                 <div class="border-b border-slate-100 pb-3 mb-6 flex justify-between items-center">
-                    <span class="text-xs font-black tracking-widest text-[#1E3A8A] uppercase" id="cockpitTitle">02 / MEMORY COCKPIT (智能自查舱)</span>
+                    <span class="text-xs font-black tracking-widest text-[#0F172A] uppercase font-serif" id="cockpitTitle">02 / SELF-CHECK COCKPIT (自查核心舱)</span>
                     <div class="flex items-center gap-4">
                         <button onclick="deleteCurrentCard()" id="deleteBtn" class="text-[10px] font-bold text-slate-300 hover:text-red-600 transition cursor-pointer hidden">
-                            🗑️ 删除此条
+                            🗑 彻底删除
                         </button>
                         <span class="text-[10px] font-mono text-gray-400" id="cardIndexText">0 / 0</span>
                     </div>
@@ -139,8 +139,8 @@
 
                 <div id="cardCockpit" class="flex-1 flex flex-col justify-between space-y-8">
                     <div id="emptyState" class="text-center py-16 flex flex-col items-center justify-center space-y-4 hidden">
-                        <span class="text-xs italic text-slate-400">🎉 太棒了！当前待自查复习的语法点已通关清零！</span>
-                        <button onclick="startInfiniteReviewMode()" class="px-6 py-3 bg-[#1E3A8A] text-white hover:bg-blue-900 font-bold text-xs rounded-xl shadow-md transition cursor-pointer flex items-center gap-2">
+                        <span class="text-xs italic text-slate-400">🎉 今日截止的所有艾宾浩斯复习任务已全部通关清零！</span>
+                        <button onclick="startInfiniteReviewMode()" class="px-6 py-3 bg-[#0F172A] text-white hover:bg-slate-800 font-bold text-xs rounded-xl shadow-md transition cursor-pointer flex items-center gap-2">
                             🔄 开启无限自由复习 / 再次学习
                         </button>
                     </div>
@@ -148,47 +148,47 @@
                     <div id="activeCard" class="space-y-6 flex-1 flex flex-col justify-between hidden">
                         <div class="space-y-2 flex justify-between items-start">
                             <div class="flex-1 min-w-0 pr-2">
-                                <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-blue-50 text-[#1E3A8A] rounded">N3</span>
+                                <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-[#0F172A] rounded font-mono">N3</span>
                                 <h1 id="cardWord" class="text-3xl md:text-4xl font-black font-serif tracking-wide text-slate-900 pt-2 break-words">加载中...</h1>
                             </div>
-                            <button onclick="speakJapanese('')" class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold text-slate-700 cursor-pointer transition shadow-sm flex items-center gap-1.5 shrink-0" title="朗读纯正日文原音">
+                            <button onclick="speakJapanese()" class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold text-slate-700 cursor-pointer transition shadow-sm flex items-center gap-1.5 shrink-0">
                                 🔊 朗读原音
                             </button>
                         </div>
 
-                        <div id="hiddenZone" class="bg-slate-50 border border-slate-100 p-4 md:p-5 rounded-xl space-y-3 opacity-100 transition-opacity">
+                        <div id="hiddenZone" class="bg-slate-50/50 border border-slate-100 p-4 md:p-5 rounded-xl space-y-3 opacity-100 transition-opacity">
                             <div class="blur-md pointer-events-none select-none transition-all duration-300" id="blurWrapper">
                                 <div class="text-xs text-slate-400 editable-zone py-1 flex items-center" onclick="makeEditable('furigana')">
                                     汉字标记：<span id="cardFuriganaContainer" class="inline-block ml-1 flex-1 font-serif text-sm text-slate-800 font-bold"><span id="cardFurigana"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></span>
                                 </div>
                                 <div class="text-xs text-slate-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('translation')">
-                                    中文翻译：<span id="cardTranslationContainer" class="inline-block ml-1 flex-1 text-base text-blue-900 font-bold"><span id="cardTranslation"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></span>
+                                    中文翻译：<span id="cardTranslationContainer" class="inline-block ml-1 flex-1 text-base text-[#0F172A] font-bold"><span id="cardTranslation"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></span>
                                 </div>
                                 <div class="text-xs text-slate-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('meaning')">
-                                    功能解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-xs text-slate-600"><span id="cardMeaning"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></span>
+                                    功能解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-xs text-slate-600 leading-relaxed"><span id="cardMeaning"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></span>
                                 </div>
                                 <div class="text-xs text-slate-400 editable-zone py-1 mt-1 block" onclick="makeEditable('connection')">
                                     接续规则：
-                                    <div id="cardConnectionContainer" class="text-slate-700 text-xs font-mono bg-white/60 p-2.5 rounded border border-slate-200/50 mt-1 leading-relaxed whitespace-pre-wrap min-h-[36px]"><span id="cardConnection"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
+                                    <div id="cardConnectionContainer" class="text-slate-700 text-xs font-mono bg-white p-2 rounded border border-slate-200/40 mt-1 leading-relaxed whitespace-pre-wrap min-h-[32px]"><span id="cardConnection"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
                                 </div>
                                 <div class="text-xs text-slate-400 editable-zone py-1 mt-2 border-t border-slate-200/60 pt-2" onclick="makeEditable('memo')">
-                                    听抄例句/场景备注：
-                                    <div id="cardMemoContainer" class="text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap min-h-[36px]"><span id="cardMemo"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
+                                    听抄例句与翻译：
+                                    <div id="cardMemoContainer" class="text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap min-h-[48px] bg-white p-2 rounded border border-slate-200/40"><span id="cardMemo"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
                                 </div>
                             </div>
                             <div id="triggerBtnBox" class="text-center py-4">
-                                <button onclick="revealCard()" id="revealBtn" class="w-full md:w-auto px-6 py-2.5 bg-slate-800 text-white font-bold text-xs rounded-full hover:bg-black transition cursor-pointer shadow-sm">
-                                    👁️ 脑补完毕，查看隐藏答案
+                                <button onclick="revealCard()" id="revealBtn" class="w-full md:w-auto px-6 py-2.5 bg-slate-800 text-white font-bold text-xs rounded-full hover:bg-black transition cursor-pointer shadow-sm tracking-wider font-serif">
+                                    👁 脑补完毕，查看答案
                                 </button>
                             </div>
                         </div>
 
                         <div id="decisionBox" class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 hidden">
                             <button onclick="handleDecision(false)" class="py-3 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold border border-rose-200 hover:bg-rose-100 transition cursor-pointer text-center">
-                                ❌ 没想起来 (重置)
+                                ❌ 没想起来
                             </button>
-                            <button onclick="handleDecision(true)" class="py-3 bg-blue-800 text-white rounded-lg text-xs font-bold hover:bg-blue-900 transition cursor-pointer text-center shadow-sm">
-                                ✅ 顺利通过 (晋级)
+                            <button onclick="handleDecision(true)" class="py-3 bg-[#0F172A] text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition cursor-pointer text-center shadow-sm">
+                                ✅ 顺利通过
                             </button>
                         </div>
                     </div>
@@ -197,11 +197,11 @@
 
         </div>
 
-        <div class="w-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-2">
-            <div class="bg-slate-100 px-5 py-4 flex justify-between items-center border-b border-slate-200 cursor-pointer" onclick="toggleDatabasePanel()">
+        <div class="w-full bg-white rounded-xl border border-slate-200/60 shadow-xs overflow-hidden mt-2">
+            <div class="bg-slate-50 px-5 py-4 flex justify-between items-center border-b border-slate-200 cursor-pointer" onclick="toggleDatabasePanel()">
                 <div class="flex items-center gap-2">
-                    <span class="text-xs font-black text-[#1E3A8A] uppercase tracking-wider">📚 WHOLE GRAMMAR DATABASE (整体文法全量题库)</span>
-                    <span class="text-[10px] bg-blue-100 text-[#1E3A8A] font-bold px-2 py-0.5 rounded-full" id="dbTotalBadge">0 条</span>
+                    <span class="text-xs font-black text-[#0F172A] uppercase tracking-wider font-serif">📚 WHOLE GRAMMAR DATABASE (全量活页题库)</span>
+                    <span class="text-[10px] bg-slate-200 text-[#0F172A] font-bold px-2 py-0.5 rounded-full font-mono" id="dbTotalBadge">0 条</span>
                 </div>
                 <span id="foldArrow" class="text-xs font-bold text-slate-400">展开 ➕</span>
             </div>
@@ -255,14 +255,14 @@
                     refreshEngineState();
                     if(showAlert) alert("☁️ 恭喜！云端题库对齐成功，所有数据完美同步到位！");
                 } else if(res.status === 404) {
-                    if(showAlert) alert("☁️ 云端尚无历史数据文件，系统将自动把您本地现有的题库推送至云端建档！");
+                    if(showAlert) alert("☁️ 云端尚无历史数据文件，将全自动把您本地现有的题库推送至云端建档。");
                     pushToCloud();
                 } else {
-                    if(showAlert) alert(`❌ 连网失败（代码:${res.status}）。请检查 Token 钥匙是否填错或漏掉了 repo 勾选权限。`);
+                    if(showAlert) alert(`❌ 连网失败（代码:${res.status}）。`);
                 }
             } catch(e) { 
                 console.error(e);
-                if(showAlert) alert("❌ 网络异常或密钥无效。不影响本地离线背诵与使用。");
+                if(showAlert) alert("❌ 网络异常。不影响离线使用。");
             }
         }
 
@@ -284,10 +284,64 @@
                     body: JSON.stringify(body)
                 }).then(res => {
                     if(res.status === 200 || res.status === 201) {
-                        res.json().then(json => { cloudSha = json.content.sha; console.log("☁️ 后台云端同步落地成功。"); });
+                        res.json().then(json => { cloudSha = json.content.sha; console.log("☁️ 后台云端同步成功。"); });
                     }
-                }).catch(err => console.error("静默云同步延迟断开:", err));
+                }).catch(err => console.error("同步异常:", err));
             } catch(e) { console.error(e); }
+        }
+
+        // 🧠 专门定制优化的 6 行智能自适应提取与整合分流器
+        function handleSmartSplit() {
+            const rawText = document.getElementById('vSmartPaste').value;
+            if (!rawText.trim()) return;
+
+            // 统一回车切块
+            let chunks = rawText.split('\n').map(c => c.trim()).filter(c => c.length > 0);
+            if (chunks.length === 0) return;
+
+            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dConnection = "", dMemo = "";
+            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+            const hasChinese = /[\u4e00-\u9fa5]/;
+
+            // 💡 核心策略：如果用户输入的行数非常规整，且没有任何接续公式符号，直接启用你专属的 6行视觉绝对对应映射！
+            const rawRawText = document.getElementById('vSmartPaste').value;
+            if (chunks.length >= 5 && !rawRawText.includes('+') && !rawRawText.includes('＋')) {
+                dWord = chunks[0] || ""; 
+                dFurigana = chunks[1] || ""; 
+                dTranslation = chunks[2] || ""; 
+                dMeaning = chunks[3] || "";
+                dConnection = ""; // 免公式输入时，接续栏留空
+                
+                // 🚀 核心亮点：把第 5 行日文原句和第 6 行中文翻译合并，带回车格式化塞进“听抄例句栏”
+                let memoPieces = [];
+                if (chunks[4]) memoPieces.push(chunks[4]);
+                if (chunks[5]) memoPieces.push(chunks[5]);
+                // 如果后面还有多余行数，全量吸纳打包
+                for(let i = 6; i < chunks.length; i++) {
+                    memoPieces.push(chunks[i]);
+                }
+                dMemo = memoPieces.join('\n');
+            } else {
+                // 如果带有加号，降级使用公式识别流
+                chunks.forEach((chunk) => {
+                    if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 15) && !hasChinese.test(chunk)) { dMemo = chunk; return; }
+                    if (hasJapanese.test(chunk) && chunk.length <= 12 && !hasChinese.test(chunk)) {
+                        if (!dWord) { dWord = chunk; return; }
+                        if (dWord && !dFurigana) { dFurigana = chunk; return; }
+                    }
+                    if (hasChinese.test(chunk) && chunk.length <= 10 && !chunk.includes('+') && !chunk.includes('＋')) { dTranslation = chunk; return; }
+                    if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干')) { dConnection = chunk; return; }
+                    if (hasChinese.test(chunk) && chunk.length > 10) { dMeaning = chunk; return; }
+                });
+            }
+
+            // 数据无感注入隐藏表单中
+            if (dWord) document.getElementById('vWord').value = dWord;
+            document.getElementById('vFurigana').value = dFurigana;
+            if (dTranslation) document.getElementById('vTranslation').value = dTranslation;
+            document.getElementById('vMeaning').value = dMeaning;
+            document.getElementById('vConnection').value = dConnection;
+            if (dMemo) document.getElementById('vMemo').value = dMemo;
         }
 
         function initVocabEngine() {
@@ -314,48 +368,8 @@
             fetchFromCloud(false);
         }
 
-        function handleSmartSplit() {
-            const rawText = document.getElementById('vSmartPaste').value;
-            if (!rawText.trim()) return;
-
-            let chunks = rawText.split('\n').map(c => c.trim()).filter(c => c.length > 0);
-            if (chunks.length <= 1) chunks = rawText.split(/[\uff0c,；;／\/|\t]/).map(c => c.trim()).filter(c => c.length > 0);
-            if (chunks.length === 0) return;
-
-            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dConnection = [], dMemo = "";
-            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
-            const hasChinese = /[\u4e00-\u9fa5]/;
-
-            chunks.forEach((chunk) => {
-                if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 15) && !hasChinese.test(chunk)) { dMemo = chunk; return; }
-                if (hasJapanese.test(chunk) && chunk.length <= 12 && !hasChinese.test(chunk)) {
-                    if (!dWord) { dWord = chunk; return; }
-                    if (dWord && !dFurigana) { dFurigana = chunk; return; }
-                }
-                if (hasChinese.test(chunk) && chunk.length <= 10 && !chunk.includes('+') && !chunk.includes('＋')) { dTranslation = chunk; return; }
-                if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干')) { dConnection.push(chunk); return; }
-                if (hasChinese.test(chunk) && chunk.length > 10) { dMeaning = chunk; return; }
-            });
-
-            if (chunks.length >= 5 && (!dWord || !dTranslation || dConnection.length === 0 || !dMemo)) {
-                dWord = chunks[0]; dFurigana = chunks[1]; dTranslation = chunks[2]; dMeaning = chunks[3];
-                let connList = []; for(let i = 4; i < chunks.length - 1; i++) connList.push(chunks[i]);
-                dConnection = connList; dMemo = chunks[chunks.length - 1];
-            }
-
-            if (dWord) document.getElementById('vWord').value = dWord;
-            document.getElementById('vFurigana').value = dFurigana;
-            if (dTranslation) document.getElementById('vTranslation').value = dTranslation;
-            document.getElementById('vMeaning').value = dMeaning;
-            document.getElementById('vConnection').value = dConnection.join('\n');
-            if (dMemo) document.getElementById('vMemo').value = dMemo;
-        }
-
-        // 💡 升级加固版：全自动断路清洁、防死锁强效朗读核心
         function speakJapanese(customText) {
-            if (!('speechSynthesis' in window)) { alert("当前浏览器环境不支持TTS语音。"); return; }
-            
-            // 🚀 核心大改动：只要按下喇叭，无条件强行终止并清空之前一切死锁在后台的排队残余音流！
+            if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel(); 
 
             let textToSpeak = "";
@@ -366,29 +380,22 @@
                 if (!card) return;
                 textToSpeak = card.word;
                 if (isRevealedStatus && card.memo && card.memo !== '暂无详细笔记。') {
-                    textToSpeak += "。 " + card.memo;
+                    // 💡 发音过滤：提取例句块里的第一行（即日文原句部分），绝对不读第二行的中文翻译！
+                    let lines = card.memo.split('\n');
+                    if (lines[0]) textToSpeak += "。 " + lines[0];
                 }
             }
 
             if (!textToSpeak.trim()) return;
-
-            // 建立一个全新的独立发音线程实例
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             utterance.lang = 'ja-JP';
 
-            // 动态混合捕获当前设备最高档的日语东京音
             const voices = window.speechSynthesis.getVoices();
             let selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Natural') || v.name.includes('Online')));
             if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && v.name.includes('Google'));
-            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Premium') || v.name.includes('Kyoko') || v.name.includes('Ichiro')));
-            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP'));
-
             if (selectedVoice) utterance.voice = selectedVoice;
 
             utterance.rate = 0.82; 
-            utterance.pitch = 1.0;
-
-            // 🚀 直接全量发射朗读，绝不再发生哑巴异常
             window.speechSynthesis.speak(utterance);
         }
 
@@ -396,7 +403,7 @@
             const now = Date.now();
             if (!isInfiniteReviewMode) {
                 document.getElementById('dueTitle').innerText = "🚨 今日截止需复习";
-                document.getElementById('cockpitTitle').innerText = "02 / MEMORY COCKPIT (智能自查舱)";
+                document.getElementById('cockpitTitle').innerText = "02 / SELF-CHECK COCKPIT (自查核心舱)";
                 dueCardsPool = [];
                 localVocabDB.forEach(item => {
                     const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
@@ -452,10 +459,10 @@
             isRevealedStatus = false;
             
             resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
-            resetDOM('cardTranslationContainer', card.translation || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
+            resetDOM('cardTranslationContainer', card.translation || '未填写中文翻译', 'text-[#0F172A] text-base font-bold');
             resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
             resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
-            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
+            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap');
 
             document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
             document.getElementById('triggerBtnBox').classList.remove('hidden');
@@ -485,6 +492,7 @@
             let val = card[key] || "";
             if(key === 'translation' && !card.translation && card.meaning) val = card.meaning;
 
+            // 💡 升级点：例句、接续规则和长解释，全部点击后变身为 4 行高的开阔大 textarea 输入舱
             let editEl = (key === 'memo' || key === 'connection' || key === 'meaning') 
                          ? `<textarea class="live-edit-input text-xs" rows="4">${val}</textarea>` 
                          : `<input type="text" class="live-edit-input" value="${val}" />`;
@@ -503,10 +511,10 @@
                 }
                 card[key] = newText;
                 if (key === 'furigana') resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif');
-                if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
+                if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#0F172A] text-base font-bold');
                 if (key === 'meaning') resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs');
                 if (key === 'connection') resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
-                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
+                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap');
             };
         }
 
@@ -527,7 +535,7 @@
 
         function deleteCurrentCard() {
             const card = dueCardsPool[currentIndex];
-            if (confirm(`⚠️ 确定要从系统文法库中彻底删除【${card.word}】吗？`)) {
+            if (confirm(`⚠️ 确定要彻底删除语法【${card.word}】吗？`)) {
                 localVocabDB = localVocabDB.filter(item => item.id !== card.id);
                 localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
                 pushToCloud();
@@ -542,16 +550,19 @@
             if (localVocabDB.length === 0) return;
             localVocabDB.forEach((item) => {
                 const cardEl = document.createElement('div');
-                cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#1E3A8A] transition-all";
-                let jaAudioText = (item.word + (item.memo && item.memo !== '暂无详细笔记。' ? '。' + item.memo : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
+                cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#0F172A] transition-all";
+                
+                // 提取点播时的日文部分发音（过滤中文行）
+                let firstLineJa = item.memo ? item.memo.split('\n')[0] : '';
+                let jaAudioText = (item.word + (firstLineJa ? '。' + firstLineJa : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
 
                 cardEl.innerHTML = `
                     <div class="space-y-1.5">
                         <div class="flex justify-between items-center">
-                            <span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">${item.level}</span>
+                            <span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-mono">${item.level}</span>
                             <div class="flex gap-2">
                                 <button onclick="speakJapanese('${jaAudioText}')" class="text-xs hover:scale-110 transition cursor-pointer" title="点播发音">🔊</button>
-                                <button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#1E3A8A] transition cursor-pointer" title="送进自查舱独立背诵">➔</button>
+                                <button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#0F172A] transition cursor-pointer" title="突击此条">➔</button>
                             </div>
                         </div>
                         <h4 class="font-serif font-bold text-slate-900 text-lg">${item.word}</h4>
@@ -559,7 +570,7 @@
                         <div class="text-xs text-blue-900 font-bold">翻译：<span>${item.translation || '未填写'}</span></div>
                         <div class="text-[11px] text-slate-500">解释：<span>${item.meaning || '无'}</span></div>
                         <div class="text-[11px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded border border-slate-100 whitespace-pre-wrap">接续：${item.connection || '无'}</div>
-                        <div class="text-[11px] text-slate-600 italic bg-blue-50/40 p-1.5 rounded border border-blue-50/50 whitespace-pre-wrap">例句：${item.memo || '无'}</div>
+                        <div class="text-[11px] text-slate-600 italic bg-blue-50/20 p-1.5 rounded border border-blue-50/30 whitespace-pre-wrap">例句与翻译：<br><span class="font-sans">${item.memo || '无'}</span></div>
                     </div>`;
                 container.appendChild(cardEl);
             });
@@ -590,7 +601,7 @@
             const meaning = document.getElementById('vMeaning').value.trim();
             const connection = document.getElementById('vConnection').value.trim();
             const memo = document.getElementById('vMemo').value.trim();
-            if (!word || !translation) return alert("请检查，日语语法点与中文翻译项为必填核心项。");
+            if (!word || !translation) return alert("请检查，日语语法点与中文翻译项为必填项。");
 
             localVocabDB.push({ 
                 id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), 
@@ -602,14 +613,6 @@
             ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
             if(isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
             refreshEngineState();
-        }
-
-        // 💡 异步激活唤醒语音列表，防止开屏首次点击延迟无声
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.getVoices();
-            if (window.speechSynthesis.onvoiceschanged !== undefined) {
-                window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
-            }
         }
     </script>
 </body>

@@ -11,8 +11,8 @@
         input:focus, select:focus, textarea:focus { border-color: #1E3A8A !important; box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.05); outline: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* ✏️ 升级点：大文本大容积多行编辑舱体 */
-        .live-edit-input { border: 1px dashed #3B82F6 !important; background-color: #FFF !important; padding: 6px 10px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #1E3A8A; line-height: 1.6; }
+        /* ✏️ 原地快捷修改输入框样式 */
+        .live-edit-input { border: 1px dashed #3B82F6 !important; background-color: #FFF !important; padding: 4px 8px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #1E3A8A; line-height: 1.6; }
         .edit-hint { opacity: 0; transition: opacity 0.2s ease; cursor: pointer; }
         .editable-zone:hover .edit-hint { opacity: 0.6; }
     </style>
@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-sky-400 mb-2"></div>
                 <h3 class="text-xl font-bold tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1">云同步安全版：优化异步零延迟刷题体验，升级接续规则与舱内例句大容积多行即点即改逻辑。</p>
+                <p class="text-xs text-slate-300 mt-1">云同步安全版：发音通道加装排堵断路器，彻底解决小喇叭无声、卡死、哑巴等异常现象。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-blue-900/50 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -151,7 +151,7 @@
                                 <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-blue-50 text-[#1E3A8A] rounded">N3</span>
                                 <h1 id="cardWord" class="text-3xl md:text-4xl font-black font-serif tracking-wide text-slate-900 pt-2 break-words">加载中...</h1>
                             </div>
-                            <button onclick="speakJapanese()" class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold text-slate-700 cursor-pointer transition shadow-sm flex items-center gap-1.5 shrink-0" title="朗读纯正日文原音">
+                            <button onclick="speakJapanese('')" class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold text-slate-700 cursor-pointer transition shadow-sm flex items-center gap-1.5 shrink-0" title="朗读纯正日文原音">
                                 🔊 朗读原音
                             </button>
                         </div>
@@ -167,12 +167,10 @@
                                 <div class="text-xs text-slate-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('meaning')">
                                     功能解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-xs text-slate-600"><span id="cardMeaning"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></span>
                                 </div>
-                                
                                 <div class="text-xs text-slate-400 editable-zone py-1 mt-1 block" onclick="makeEditable('connection')">
                                     接续规则：
                                     <div id="cardConnectionContainer" class="text-slate-700 text-xs font-mono bg-white/60 p-2.5 rounded border border-slate-200/50 mt-1 leading-relaxed whitespace-pre-wrap min-h-[36px]"><span id="cardConnection"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
                                 </div>
-                                
                                 <div class="text-xs text-slate-400 editable-zone py-1 mt-2 border-t border-slate-200/60 pt-2" onclick="makeEditable('memo')">
                                     听抄例句/场景备注：
                                     <div id="cardMemoContainer" class="text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap min-h-[36px]"><span id="cardMemo"></span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span></div>
@@ -268,7 +266,6 @@
             }
         }
 
-        // 📤 异步静默无感上传：绝不卡死任何前端操作按钮
         async function pushToCloud() {
             const user = localStorage.getItem('MZ_GH_USER');
             const repo = localStorage.getItem('MZ_GH_REPO');
@@ -278,10 +275,7 @@
             const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
             try {
                 const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(localVocabDB))));
-                const body = {
-                    message: "🗃️ Sync Database via MZ.Edu App",
-                    content: contentBase64
-                };
+                const body = { message: "🗃️ Sync Database via MZ.Edu App", content: contentBase64 };
                 if(cloudSha) body.sha = cloudSha;
 
                 fetch(url, {
@@ -357,23 +351,44 @@
             if (dMemo) document.getElementById('vMemo').value = dMemo;
         }
 
+        // 💡 升级加固版：全自动断路清洁、防死锁强效朗读核心
         function speakJapanese(customText) {
-            if (!('speechSynthesis' in window)) return;
-            if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+            if (!('speechSynthesis' in window)) { alert("当前浏览器环境不支持TTS语音。"); return; }
+            
+            // 🚀 核心大改动：只要按下喇叭，无条件强行终止并清空之前一切死锁在后台的排队残余音流！
+            window.speechSynthesis.cancel(); 
 
-            let textToSpeak = customText || document.getElementById('cardWord').innerText;
-            if (!customText && isRevealedStatus) {
-                const m = document.getElementById('cardMemo').innerText;
-                if (m && m !== '暂无详细笔记。') textToSpeak += "。 " + m;
+            let textToSpeak = "";
+            if (customText) {
+                textToSpeak = customText;
+            } else {
+                const card = dueCardsPool[currentIndex];
+                if (!card) return;
+                textToSpeak = card.word;
+                if (isRevealedStatus && card.memo && card.memo !== '暂无详细笔记。') {
+                    textToSpeak += "。 " + card.memo;
+                }
             }
 
+            if (!textToSpeak.trim()) return;
+
+            // 建立一个全新的独立发音线程实例
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             utterance.lang = 'ja-JP';
+
+            // 动态混合捕获当前设备最高档的日语东京音
             const voices = window.speechSynthesis.getVoices();
             let selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Natural') || v.name.includes('Online')));
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && v.name.includes('Google'));
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Premium') || v.name.includes('Kyoko') || v.name.includes('Ichiro')));
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP'));
+
             if (selectedVoice) utterance.voice = selectedVoice;
 
             utterance.rate = 0.82; 
+            utterance.pitch = 1.0;
+
+            // 🚀 直接全量发射朗读，绝不再发生哑巴异常
             window.speechSynthesis.speak(utterance);
         }
 
@@ -385,79 +400,91 @@
                 dueCardsPool = [];
                 localVocabDB.forEach(item => {
                     const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
-                    if ((item.stage || 0) < EBBINGHAUS_INTERVALS.length) {
-                        if (hoursPassed >= EBBINGHAUS_INTERVALS[item.stage || 0]) dueCardsPool.push(item);
+                    const currentStage = item.stage || 0;
+                    if (currentStage < EBBINGHAUS_INTERVALS.length) {
+                        const req = EBBINGHAUS_INTERVALS[currentStage];
+                        if (hoursPassed >= req) dueCardsPool.push(item);
                     }
                 });
                 document.getElementById('dueCount').innerText = dueCardsPool.length;
+            } else {
+                document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
+                document.getElementById('dueCount').innerText = dueCardsPool.length;
             }
+
             document.getElementById('totalCount').innerText = localVocabDB.length;
             document.getElementById('dbTotalBadge').innerText = `${localVocabDB.length} 条`;
+            
             renderActiveCard();
             renderWholeDatabaseList(); 
         }
 
         function startInfiniteReviewMode() {
+            if (localVocabDB.length === 0) return;
             isInfiniteReviewMode = true;
             dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
             currentIndex = 0;
-            document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
+            document.getElementById('cockpitTitle').innerText = "🔄 智能自查舱 (再次学习·乱序通关模式)";
             refreshEngineState();
         }
 
         function renderActiveCard() {
             const emptyState = document.getElementById('emptyState');
             const activeCard = document.getElementById('activeCard');
+            const cardIndexText = document.getElementById('cardIndexText');
             const deleteBtn = document.getElementById('deleteBtn');
+
             if (dueCardsPool.length === 0) {
                 emptyState.classList.remove('hidden'); activeCard.classList.add('hidden'); deleteBtn.classList.add('hidden');
                 document.getElementById('cardIndexText').innerText = "0 / 0"; return;
             }
-            emptyState.classList.add('hidden'); activeCard.classList.remove('hidden'); deleteBtn.classList.remove('hidden');
-            document.getElementById('cardIndexText').innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
+
+            emptyState.classList.add('hidden'); activeCard.classList.remove('hidden'); deleteBtn.classList.remove('hidden'); 
+            if (currentIndex >= dueCardsPool.length) {
+                if (isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+                currentIndex = 0;
+            }
+            cardIndexText.innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
 
             const card = dueCardsPool[currentIndex];
             document.getElementById('cardLevel').innerText = card.level;
             document.getElementById('cardWord').innerText = card.word;
-            isRevealedStatus = false; // 初始为未翻牌状态
+            isRevealedStatus = false;
             
-            resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif', 'furigana');
-            resetDOM('cardTranslationContainer', card.translation || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold', 'translation');
-            resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs', 'meaning');
-            resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap', 'connection');
-            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap', 'memo');
+            resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
+            resetDOM('cardTranslationContainer', card.translation || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
+            resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
+            resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
 
             document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
             document.getElementById('triggerBtnBox').classList.remove('hidden');
             document.getElementById('decisionBox').classList.add('hidden');
         }
 
-        // 💡 强化绑定：让每一个独立渲染出的节点都安全附带原地修改特权
-        function resetDOM(id, text, cls, key) {
+        function resetDOM(id, text, cls) {
             const el = document.getElementById(id);
-            if(el) {
-                el.innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
-            }
+            if(el) el.innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
         }
 
         function revealCard() {
             document.getElementById('blurWrapper').className = "transition-all duration-300";
             document.getElementById('triggerBtnBox').classList.add('hidden');
             document.getElementById('decisionBox').className = "grid grid-cols-2 gap-4 pt-4 border-t border-slate-100";
-            isRevealedStatus = true; // 彻底解封允许跨端编辑修改
+            isRevealedStatus = true;
         }
 
-        // 🧠 升级：大容积、完全支持多行回车的原地直改核心变身舱
         function makeEditable(key) {
-            if (!isRevealedStatus) return; // 没看答案前阻断编辑预防误触
-            
+            if (!isRevealedStatus) return;
             const card = dueCardsPool[currentIndex];
             let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'translation' ? 'cardTranslationContainer' : (key === 'meaning' ? 'cardMeaningContainer' : (key === 'connection' ? 'cardConnectionContainer' : 'cardMemoContainer')));
+            
             const container = document.getElementById(id);
             if (container.querySelector('input') || container.querySelector('textarea')) return;
 
             let val = card[key] || "";
-            // 💡 特权：例句、接续规则、功能解释全部采用全尺寸 textarea 撑大，彻底解决装不下的痛点
+            if(key === 'translation' && !card.translation && card.meaning) val = card.meaning;
+
             let editEl = (key === 'memo' || key === 'connection' || key === 'meaning') 
                          ? `<textarea class="live-edit-input text-xs" rows="4">${val}</textarea>` 
                          : `<input type="text" class="live-edit-input" value="${val}" />`;
@@ -466,27 +493,23 @@
             const input = container.children[0];
             input.focus();
 
-            // 失去焦点全自动静默保存入云
             input.onblur = function() {
                 const newText = input.value.trim();
                 const matched = localVocabDB.find(i => i.id === card.id);
                 if (matched) {
                     matched[key] = newText;
                     localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                    pushToCloud(); // 瞬间发起异步后台云同步，按键完全零卡顿
+                    pushToCloud();
                 }
                 card[key] = newText;
-                
-                // 复原精致卡片视觉
-                if (key === 'furigana') resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif', key);
-                if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold', key);
-                if (key === 'meaning') resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs', key);
-                if (key === 'connection') resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap', key);
-                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap', key);
+                if (key === 'furigana') resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif');
+                if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#1E3A8A] text-base font-bold');
+                if (key === 'meaning') resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs');
+                if (key === 'connection') resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-600 font-sans mt-1 italic text-xs leading-relaxed whitespace-pre-wrap');
             };
         }
 
-        // 🧠 零延迟即时切题算法：点击瞬间翻页，绝不让跨国网络延迟拖累你的手速
         function handleDecision(yes) {
             const card = dueCardsPool[currentIndex];
             const matched = localVocabDB.find(i => i.id === card.id);
@@ -495,18 +518,16 @@
                     matched.stage = yes ? (matched.stage || 0) + 1 : 1;
                     matched.lastTime = Date.now();
                     localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                    pushToCloud(); // 静默后台慢上传
+                    pushToCloud();
                 }
-                
-                // 🚀 核心爽快感：指针瞬间+1，界面瞬间更新，网络上传在背景默默跑
-                currentIndex++; 
+                currentIndex++;
                 refreshEngineState();
             }
         }
 
         function deleteCurrentCard() {
             const card = dueCardsPool[currentIndex];
-            if (confirm(`⚠️ 确定要彻底删除语法【${card.word}】吗？`)) {
+            if (confirm(`⚠️ 确定要从系统文法库中彻底删除【${card.word}】吗？`)) {
                 localVocabDB = localVocabDB.filter(item => item.id !== card.id);
                 localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
                 pushToCloud();
@@ -516,15 +537,23 @@
         }
 
         function renderWholeDatabaseList() {
-            const container = document.getElementById('databasePanelBody'); container.innerHTML = "";
+            const container = document.getElementById('databasePanelBody');
+            container.innerHTML = "";
             if (localVocabDB.length === 0) return;
             localVocabDB.forEach((item) => {
                 const cardEl = document.createElement('div');
                 cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#1E3A8A] transition-all";
                 let jaAudioText = (item.word + (item.memo && item.memo !== '暂无详细笔记。' ? '。' + item.memo : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
+
                 cardEl.innerHTML = `
                     <div class="space-y-1.5">
-                        <div class="flex justify-between items-center"><span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">${item.level}</span><div class="flex gap-2"><button onclick="speakJapanese('${jaAudioText}')" class="text-xs cursor-pointer">🔊</button><button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#1E3A8A] cursor-pointer">➔</button></div></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">${item.level}</span>
+                            <div class="flex gap-2">
+                                <button onclick="speakJapanese('${jaAudioText}')" class="text-xs hover:scale-110 transition cursor-pointer" title="点播发音">🔊</button>
+                                <button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#1E3A8A] transition cursor-pointer" title="送进自查舱独立背诵">➔</button>
+                            </div>
+                        </div>
                         <h4 class="font-serif font-bold text-slate-900 text-lg">${item.word}</h4>
                         <div class="text-[11px] text-slate-400 font-serif">汉字：<span class="text-slate-700 font-bold">${item.furigana || '无'}</span></div>
                         <div class="text-xs text-blue-900 font-bold">翻译：<span>${item.translation || '未填写'}</span></div>
@@ -542,9 +571,15 @@
         }
 
         function toggleDatabasePanel() {
-            const body = document.getElementById('databasePanelBody'); const arrow = document.getElementById('foldArrow');
-            if (body.classList.contains('hidden')) { body.classList.remove('hidden'); arrow.innerText = "折叠 ➖"; } 
-            else { body.classList.add('hidden'); arrow.innerText = "展开 ➕"; }
+            const body = document.getElementById('databasePanelBody');
+            const arrow = document.getElementById('foldArrow');
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                arrow.innerText = "折叠 ➖";
+            } else {
+                body.classList.add('hidden');
+                arrow.innerText = "展开 ➕";
+            }
         }
 
         function saveNewVocab() {
@@ -557,7 +592,10 @@
             const memo = document.getElementById('vMemo').value.trim();
             if (!word || !translation) return alert("请检查，日语语法点与中文翻译项为必填核心项。");
 
-            localVocabDB.push({ id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() });
+            localVocabDB.push({ 
+                id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), 
+                word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() 
+            });
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
             pushToCloud();
 
@@ -566,24 +604,12 @@
             refreshEngineState();
         }
 
-        function exportBackupData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
-            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `文法备份_${Date.now()}.json`); dl.click();
-        }
-
-        function importBackupData(input) {
-            const file = input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (Array.isArray(data)) {
-                        localVocabDB = data; localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                        pushToCloud(); refreshEngineState();
-                    }
-                } catch(err) { alert("文件解析失败。"); }
-            };
-            reader.readAsText(file);
+        // 💡 异步激活唤醒语音列表，防止开屏首次点击延迟无声
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+            }
         }
     </script>
 </body>

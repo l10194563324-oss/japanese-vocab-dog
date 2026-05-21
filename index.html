@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
                 <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：已升级中文多行高容错云传输矩阵，彻底杜绝数据打包卡死按钮异常。</p>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：已升级云数据打包容错矩阵。双端免费云同步终极完工版。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -42,7 +42,7 @@
         <div id="cloudConfigPanel" class="bg-slate-100/80 border border-slate-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 text-xs items-end">
             <div>
                 <label class="block font-bold text-slate-700 mb-1">GitHub 用户名</label>
-                <input type="text" id="ghUser" placeholder="例如: l10194563324-oss" class="w-full p-2 border">
+                <input type="text" id="ghUser" value="l10194563324-oss" class="w-full p-2 border">
             </div>
             <div>
                 <label class="block font-bold text-slate-700 mb-1">仓库名称</label>
@@ -50,10 +50,10 @@
             </div>
             <div>
                 <label class="block font-bold text-slate-700 mb-1">GitHub Token (钥匙)</label>
-                <input type="password" id="ghToken" placeholder="贴入 ghp_ 开头的Token" class="w-full p-2 border">
+                <input type="password" id="ghToken" placeholder="贴入 ghp_ 或 github_pat_ 开头的Token" class="w-full p-2 border">
             </div>
             <div class="flex gap-2">
-                <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition">
+                <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition cursor-pointer">
                     💾 绑定并云同步
                 </button>
                 <button onclick="fetchFromCloud(true)" class="py-2 px-3 bg-slate-600 text-white font-bold rounded-lg hover:bg-slate-700 cursor-pointer" title="从云端拉取最新数据">
@@ -70,7 +70,7 @@
                     
                     <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-1.5">
                         <label class="block text-[11px] font-black text-[#0F172A]">✨ 自由乱序输入/粘贴框</label>
-                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="管它格式和符号，直接把中日文、接续、听抄例句一屁股糊在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
+                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="管它格式和符号，直接把听抄的整段文本糊在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -223,7 +223,7 @@
         };
 
         function loadCloudConfigFromLocal() {
-            document.getElementById('ghUser').value = localStorage.getItem('MZ_GH_USER') || '';
+            document.getElementById('ghUser').value = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
             document.getElementById('ghRepo').value = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
             document.getElementById('ghToken').value = localStorage.getItem('MZ_GH_TOKEN') || '';
         }
@@ -235,10 +235,10 @@
             fetchFromCloud(true);
         }
 
-        // 🧠 高安全云端拉取机制
+        // 🧠 终极柔性拉取内核
         async function fetchFromCloud(showAlert = false) {
-            const user = localStorage.getItem('MZ_GH_USER');
-            const repo = localStorage.getItem('MZ_GH_REPO');
+            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
             const token = localStorage.getItem('MZ_GH_TOKEN');
             if(!user || !token) return;
 
@@ -250,7 +250,6 @@
                 if(res.status === 200) {
                     const json = await res.json();
                     cloudSha = json.sha;
-                    // 💡 升级：换装更健壮的 utf-8 宽容度解码网络，彻底解决中文字符集跑冒滴漏
                     const decodedData = decodeURIComponent(atob(json.content).split('').map(function(c) {
                         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                     }).join(''));
@@ -262,24 +261,25 @@
                 } else if(res.status === 404) {
                     if(showAlert) alert("☁️ 云端目前没有历史文件，系统会自动帮您本地的错题同步推送上去建档。");
                     pushToCloud();
+                } else {
+                    if(showAlert) alert("❌ 连网握手受阻（状态码:" + res.status + "）。数据已完美转为本地离线保障模式，您录入的信息依然会安全储存在设备中！");
                 }
             } catch(e) { 
                 console.error(e);
-                if(showAlert) alert("❌ 云同步连网失败，请确认您的网络状态。");
+                if(showAlert) alert("❌ 连网失败。数据已切换至本地安全隔离仓，请检查 Token 钥匙是否有多余空格。");
             }
         }
 
-        // 🧠 升级：重构 Base64 推送编码链，彻底终结多行中文爆栈卡死按钮的 DOMException 顽疾
+        // 🧠 终极柔性全托管推送
         async function pushToCloud() {
-            const user = localStorage.getItem('MZ_GH_USER');
-            const repo = localStorage.getItem('MZ_GH_REPO');
+            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
             const token = localStorage.getItem('MZ_GH_TOKEN');
             if(!user || !token) return;
 
             const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
             try {
                 const rawJsonStr = JSON.stringify(localVocabDB);
-                // 🚀 核心加固：利用万能字节流转化，把多行回车和中文完美揉碎成安全字符，再交付 btoa 转换，绝不崩溃！
                 const safeUtf8Str = btoa(encodeURIComponent(rawJsonStr).replace(/%([0-9A-F]{2})/g, function(match, p1) {
                     return String.fromCharCode('0x' + p1);
                 }));
@@ -295,7 +295,7 @@
                     if(res.status === 200 || res.status === 201) {
                         res.json().then(json => { cloudSha = json.content.sha; console.log("☁️ 后台云端同步成功。"); });
                     }
-                }).catch(err => console.error("同步异常:", err));
+                }).catch(err => console.error("同步传输拦截，数据由设备无损暂存", err));
             } catch(e) { console.error("数据云同步打包阻断保护:", e); }
         }
 
@@ -482,7 +482,18 @@
             document.getElementById('decisionBox').classList.add('hidden');
         }
 
-        // 💡 彻底更正：加回了此前不小心丢失的第 265 行闭合条件判断结构，逻辑完全通畅
+        function resetDOM(id, text, cls) {
+            const el = document.getElementById(id);
+            if(el) el.innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
+        }
+
+        function revealCard() {
+            document.getElementById('blurWrapper').className = "transition-all duration-300";
+            document.getElementById('triggerBtnBox').classList.add('hidden');
+            document.getElementById('decisionBox').className = "grid grid-cols-2 gap-4 pt-4 border-t border-slate-100";
+            isRevealedStatus = true;
+        }
+
         function makeEditable(key) {
             if (!isRevealedStatus) return;
             const card = dueCardsPool[currentIndex];
@@ -589,8 +600,6 @@
             }
         }
 
-        document.getElementById('appContainer').style.display = 'block';
-
         function saveNewVocab() {
             const word = document.getElementById('vWord').value.trim();
             const level = document.getElementById('vLevel').value;
@@ -611,6 +620,13 @@
             ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
             if(isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
             refreshEngineState();
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+            }
         }
     </script>
 </body>

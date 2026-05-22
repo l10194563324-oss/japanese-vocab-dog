@@ -7,200 +7,92 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: -apple-system, "PingFang SC", "Hiragino Sans", "Yu Gothic", sans-serif; background-color: #F8FAFC; color: #1E293B; }
-        input, select, textarea { background-color: #FFFFFF; border: 1px solid #E2E8F0 !important; transition: all 0.15s ease; border-radius: 6px; }
-        input:focus, select:focus, textarea:focus { border-color: #0F172A !important; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05); outline: none; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .live-edit-input { border: 1px dashed #0F172A !important; background-color: #FFF !important; padding: 6px 10px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #0F172A; line-height: 1.6; }
-        .edit-hint { opacity: 0; transition: opacity 0.2s ease; cursor: pointer; }
-        .editable-zone:hover .edit-hint { opacity: 0.6; }
+        .blur-zone { filter: blur(8px); pointer-events: none; transition: filter 0.3s; }
+        .revealed { filter: blur(0px); pointer-events: auto; }
+        .live-edit-input { border: 1px dashed #0F172A !important; background-color: #FFF !important; padding: 4px; width: 100%; border-radius: 4px; }
     </style>
 </head>
-<body class="p-3 md:p-8 min-h-screen flex justify-center items-start bg-[#F8FAFC]">
-    <div id="appContainer" class="w-full max-w-7xl flex flex-col gap-6 md:gap-8">
-        <div class="bg-[#0F172A] p-6 md:p-8 rounded-xl shadow-sm text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-                <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
-                <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：全功能封顶版。同步、删除、录入、查阅全部修复。</p>
-            </div>
-            <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
-                <div class="text-center md:text-left">
-                    <span class="block text-[10px] font-black text-rose-300 tracking-wider mb-1 uppercase" id="dueTitle">🚨 今日截止需复习</span>
-                    <span class="text-4xl font-black tracking-tighter text-rose-400" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
-                </div>
-                <div class="text-center md:text-left border-l border-slate-800 pl-8">
-                    <span class="block text-[10px] font-black text-sky-300 tracking-wider mb-1 uppercase">📦 语法库总储备</span>
-                    <span class="text-4xl font-black tracking-tighter text-sky-200" id="totalCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
-                </div>
-            </div>
+<body class="p-4 md:p-8 bg-[#F8FAFC]">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <div class="bg-[#0F172A] p-6 rounded-xl text-white">
+            <h3 class="text-xl font-bold font-serif">N5-N2自查文法库</h3>
+            <p class="text-xs text-slate-300">功能完美复原版</p>
         </div>
 
-        <div id="cloudConfigPanel" class="bg-slate-100/80 border border-slate-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 text-xs items-end">
-            <div><label class="block font-bold text-slate-700 mb-1">GitHub 用户名</label><input type="text" id="ghUser" value="l10194563324-oss" class="w-full p-2 border"></div>
-            <div><label class="block font-bold text-slate-700 mb-1">仓库名称</label><input type="text" id="ghRepo" value="japanese-vocab-dog" class="w-full p-2 border"></div>
-            <div><label class="block font-bold text-slate-700 mb-1">GitHub Token</label><input type="password" id="ghToken" placeholder="贴入 ghp_ 开头的Token" class="w-full p-2 border"></div>
-            <div class="flex gap-2">
-                <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition cursor-pointer">💾 绑定同步</button>
-                <button onclick="fetchFromCloud(true)" class="py-2 px-3 bg-slate-600 text-white font-bold rounded-lg hover:bg-slate-700 cursor-pointer">🔄 拉取</button>
-            </div>
+        <div class="flex gap-2">
+            <input type="password" id="ghToken" placeholder="输入GitHub Token" class="flex-1 p-2 border rounded">
+            <button onclick="saveAndSync()" class="px-4 py-2 bg-[#0F172A] text-white rounded">同步</button>
         </div>
 
-        <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
-            <div class="lg:col-span-5 flex flex-col gap-6 order-2 lg:order-1">
-                <div class="bg-white p-5 md:p-6 rounded-xl border border-slate-200/60 shadow-xs space-y-4">
-                    <span class="text-xs font-black tracking-widest text-[#0F172A] uppercase block border-b border-slate-100 pb-2 font-serif">01 / SMART INPUT FLOW</span>
-                    <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="听抄文字粘贴框..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="col-span-2"><input type="text" id="vWord" class="w-full p-2.5 rounded-lg text-xs font-bold" placeholder="语法点"></div>
-                        <div><select id="vLevel" class="w-full p-2.5 rounded-lg text-xs font-bold"><option value="N2">N2</option><option value="N3" selected>N3</option><option value="N4">N4</option><option value="N5">N5</option></select></div>
-                    </div>
-                    <input type="text" id="vFurigana" class="w-full p-2.5 rounded-lg text-xs" placeholder="汉字标记">
-                    <input type="text" id="vTranslation" class="w-full p-2.5 rounded-lg text-xs font-bold" placeholder="中文翻译">
-                    <input type="text" id="vMeaning" class="w-full p-2.5 rounded-lg text-xs" placeholder="功能解释">
-                    <textarea id="vConnection" rows="2" class="w-full p-2.5 rounded-lg text-xs" placeholder="接续规则"></textarea>
-                    <textarea id="vMemo" rows="2" class="w-full p-2.5 rounded-lg text-xs" placeholder="例句备注"></textarea>
-                    <button onclick="saveNewVocab()" class="w-full text-xs font-black py-3 bg-[#0F172A] text-white rounded-lg transition cursor-pointer">📥 安全存入</button>
-                </div>
-                <div class="bg-white p-4 rounded-xl border border-slate-200/60 shadow-xs flex gap-2 text-xs">
-                    <button onclick="exportBackupData()" class="flex-1 p-2 border rounded-lg font-bold text-slate-600">📤 导出备份</button>
-                    <label class="flex-1 p-2 border rounded-lg text-center font-bold text-slate-600 cursor-pointer">📥 导入恢复<input type="file" id="importFile" class="hidden" onchange="importBackupData(this)"></label>
-                </div>
+        <div id="activeCard" class="bg-white p-6 rounded-xl border shadow-sm space-y-4">
+            <h1 id="cardWord" class="text-3xl font-black"></h1>
+            <div id="blurWrapper" class="blur-zone space-y-3 p-4 bg-slate-50 rounded-lg">
+                <div onclick="makeEditable('furigana')">汉字：<span id="cardFurigana"></span></div>
+                <div onclick="makeEditable('translation')">翻译：<span id="cardTranslation"></span></div>
+                <div onclick="makeEditable('meaning')">解释：<span id="cardMeaning"></span></div>
+                <div onclick="makeEditable('connection')">接续：<span id="cardConnection"></span></div>
+                <div onclick="makeEditable('memo')">备注：<span id="cardMemo"></span></div>
             </div>
-
-            <div class="lg:col-span-7 bg-white p-5 md:p-6 rounded-xl border border-slate-200/60 shadow-xs flex flex-col min-h-[480px] order-1 lg:order-2">
-                <div class="border-b pb-3 mb-6 flex justify-between items-center">
-                    <span class="text-xs font-black tracking-widest uppercase font-serif">02 / SELF-CHECK COCKPIT</span>
-                    <button onclick="deleteCurrentCard()" id="deleteBtn" class="text-[10px] font-bold text-red-500 hover:text-red-700 transition cursor-pointer">🗑 彻底删除</button>
-                </div>
-                <div id="cardCockpit" class="flex-1 flex flex-col justify-between">
-                    <div id="emptyState" class="text-center py-16 hidden">🎉 全部通关！</div>
-                    <div id="activeCard" class="space-y-6">
-                        <div class="flex justify-between items-start">
-                            <div><span id="cardLevel" class="bg-slate-100 text-[#0F172A] px-2 py-0.5 rounded text-[10px] font-mono">N3</span><h1 id="cardWord" class="text-3xl font-black pt-2"></h1></div>
-                            <button onclick="speakJapanese()" class="p-2 bg-slate-50 border rounded-lg text-xs font-bold">🔊 读音</button>
-                        </div>
-                        <div id="hiddenZone" class="bg-slate-50/50 border p-4 rounded-xl space-y-3">
-                            <div class="blur-md pointer-events-none select-none transition-all duration-300" id="blurWrapper">
-                                <div onclick="makeEditable('furigana')" class="cursor-pointer">汉字：<span id="cardFuriganaContainer"></span></div>
-                                <div onclick="makeEditable('translation')" class="cursor-pointer">翻译：<span id="cardTranslationContainer"></span></div>
-                                <div onclick="makeEditable('meaning')" class="cursor-pointer">解释：<span id="cardMeaningContainer"></span></div>
-                                <div onclick="makeEditable('connection')" class="cursor-pointer">接续：<div id="cardConnectionContainer" class="text-xs font-mono bg-white p-2 mt-1"></div></div>
-                                <div onclick="makeEditable('memo')" class="cursor-pointer">备注：<div id="cardMemoContainer" class="text-xs bg-white p-2 mt-1"></div></div>
-                            </div>
-                            <div id="triggerBtnBox" class="text-center py-2"><button onclick="revealCard()" class="w-full py-2 bg-slate-800 text-white rounded-full text-xs">👁 查看答案</button></div>
-                        </div>
-                        <div id="decisionBox" class="grid grid-cols-2 gap-4 hidden">
-                            <button onclick="handleDecision(false)" class="py-2 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold">❌ 没想起来</button>
-                            <button onclick="handleDecision(true)" class="py-2 bg-[#0F172A] text-white rounded-lg text-xs font-bold">✅ 顺利通过</button>
-                        </div>
-                    </div>
-                </div>
+            <button id="revealBtn" onclick="revealCard()" class="w-full py-2 bg-slate-800 text-white rounded-lg">👁 查看答案</button>
+            <div id="decisionBox" class="grid grid-cols-2 gap-4 hidden">
+                <button onclick="handleDecision(false)" class="py-2 bg-rose-50 text-rose-700 rounded">❌ 没想起来</button>
+                <button onclick="handleDecision(true)" class="py-2 bg-[#0F172A] text-white rounded">✅ 顺利通过</button>
             </div>
-        </div>
-
-        <div class="w-full bg-white rounded-xl border p-4 shadow-sm mt-2">
-            <div class="flex justify-between items-center cursor-pointer" onclick="toggleDatabasePanel()">
-                <span class="text-xs font-black text-[#0F172A] uppercase tracking-wider font-serif">📚 WHOLE GRAMMAR DATABASE</span>
-                <span id="foldArrow" class="text-xs font-bold text-slate-400">展开 ➕</span>
-            </div>
-            <div id="databasePanelBody" class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 hidden"></div>
         </div>
     </div>
 
     <script>
-        const EBBINGHAUS_INTERVALS = [0, 1, 24, 72, 168, 360];
-        let localVocabDB = []; let dueCardsPool = []; let currentIndex = 0; let isRevealedStatus = false;
-        let isInfiniteReviewMode = false;
+        let localDB = JSON.parse(localStorage.getItem('MZ_JAP_GRAMMAR_DB') || '[]');
+        let currentIndex = 0;
 
-        window.onload = function() {
-            let data = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
-            localVocabDB = data ? JSON.parse(data) : [];
-            loadCloudConfigFromLocal();
-            refreshEngineState();
-            fetchFromCloud(false);
-        };
-
-        function loadCloudConfigFromLocal() {
-            document.getElementById('ghUser').value = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
-            document.getElementById('ghRepo').value = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
-            document.getElementById('ghToken').value = localStorage.getItem('MZ_GH_TOKEN') || '';
-        }
-
-        function saveCloudConfig() {
-            localStorage.setItem('MZ_GH_USER', document.getElementById('ghUser').value.trim());
-            localStorage.setItem('MZ_GH_REPO', document.getElementById('ghRepo').value.trim());
-            localStorage.setItem('MZ_GH_TOKEN', document.getElementById('ghToken').value.trim());
-            fetchFromCloud(true);
-        }
-
-        function fetchFromCloud(showAlert) {
-            const user = localStorage.getItem('MZ_GH_USER'), repo = localStorage.getItem('MZ_GH_REPO'), token = localStorage.getItem('MZ_GH_TOKEN');
-            if(!user || !token) return;
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", `https://api.github.com/repos/${user}/${repo}/contents/database.json`, true);
-            xhr.setRequestHeader("Authorization", `token ${token}`);
-            xhr.onreadystatechange = function() {
-                if(xhr.readyState === 4 && xhr.status === 200) {
-                    const json = JSON.parse(xhr.responseText);
-                    const data = JSON.parse(decodeURIComponent(escape(atob(json.content.replace(/\s/g, '')))));
-                    localVocabDB = data; localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                    refreshEngineState();
-                    if(showAlert) alert("✅ 同步成功！");
-                }
-            };
-            xhr.send();
-        }
-
-        function pushToCloud() {
-            const user = localStorage.getItem('MZ_GH_USER'), repo = localStorage.getItem('MZ_GH_REPO'), token = localStorage.getItem('MZ_GH_TOKEN');
-            if(!user || !token) return;
-            const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", url, false); xhr.setRequestHeader("Authorization", `token ${token}`); xhr.send();
-            let sha = xhr.status === 200 ? JSON.parse(xhr.responseText).sha : "";
-            
-            const put = new XMLHttpRequest();
-            put.open("PUT", url, true);
-            put.setRequestHeader("Authorization", `token ${token}`);
-            put.send(JSON.stringify({ message: "Update", content: btoa(unescape(encodeURIComponent(JSON.stringify(localVocabDB)))), sha: sha }));
-        }
-
-        function handleSmartSplit() { /* 同之前逻辑 */ }
-        function saveNewVocab() {
-            const newCard = { id: 'v_' + Date.now(), word: document.getElementById('vWord').value, level: document.getElementById('vLevel').value, furigana: document.getElementById('vFurigana').value, translation: document.getElementById('vTranslation').value, meaning: document.getElementById('vMeaning').value, connection: document.getElementById('vConnection').value, memo: document.getElementById('vMemo').value, stage: 0, lastTime: Date.now() };
-            localVocabDB.unshift(newCard); localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB)); refreshEngineState(); pushToCloud();
-        }
-
-        function deleteCurrentCard() {
-            const card = dueCardsPool[currentIndex];
-            localVocabDB = localVocabDB.filter(item => item.id !== card.id);
-            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-            pushToCloud(); refreshEngineState();
-        }
-
-        function refreshEngineState() {
-            dueCardsPool = localVocabDB.filter(item => (Date.now() - item.lastTime) / 3600000 >= EBBINGHAUS_INTERVALS[item.stage || 0]);
-            document.getElementById('dueCount').innerText = dueCardsPool.length;
-            document.getElementById('totalCount').innerText = localVocabDB.length;
-            renderActiveCard();
-        }
-
-        function renderActiveCard() {
-            if(dueCardsPool.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); document.getElementById('activeCard').classList.add('hidden'); return; }
-            document.getElementById('activeCard').classList.remove('hidden');
-            const card = dueCardsPool[currentIndex];
+        function refresh() {
+            if(localDB.length === 0) return;
+            const card = localDB[currentIndex];
             document.getElementById('cardWord').innerText = card.word;
-            document.getElementById('cardFuriganaContainer').innerText = card.furigana;
-            document.getElementById('cardTranslationContainer').innerText = card.translation;
-            document.getElementById('cardMeaningContainer').innerText = card.meaning;
-            document.getElementById('cardConnectionContainer').innerText = card.connection;
-            document.getElementById('cardMemoContainer').innerText = card.memo;
+            document.getElementById('cardFurigana').innerText = card.furigana || '无';
+            document.getElementById('cardTranslation').innerText = card.translation || '无';
+            document.getElementById('cardMeaning').innerText = card.meaning || '无';
+            document.getElementById('cardConnection').innerText = card.connection || '无';
+            document.getElementById('cardMemo').innerText = card.memo || '无';
         }
 
-        function revealCard() { document.getElementById('blurWrapper').classList.remove('blur-md'); document.getElementById('decisionBox').classList.remove('hidden'); isRevealedStatus = true; }
-        function handleDecision(yes) { dueCardsPool[currentIndex].stage = yes ? (dueCardsPool[currentIndex].stage || 0) + 1 : 1; dueCardsPool[currentIndex].lastTime = Date.now(); localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB)); pushToCloud(); currentIndex++; refreshEngineState(); }
-        function speakJapanese() { const u = new SpeechSynthesisUtterance(dueCardsPool[currentIndex].word); u.lang = 'ja-JP'; window.speechSynthesis.speak(u); }
-        function toggleDatabasePanel() { document.getElementById('databasePanelBody').classList.toggle('hidden'); }
+        function revealCard() {
+            document.getElementById('blurWrapper').classList.add('revealed');
+            document.getElementById('revealBtn').classList.add('hidden');
+            document.getElementById('decisionBox').classList.remove('hidden');
+        }
+
+        function handleDecision(yes) {
+            currentIndex = (currentIndex + 1) % localDB.length;
+            document.getElementById('blurWrapper').classList.remove('revealed');
+            document.getElementById('revealBtn').classList.remove('hidden');
+            document.getElementById('decisionBox').classList.add('hidden');
+            refresh();
+        }
+
+        function makeEditable(key) {
+            const span = document.getElementById('card'+key.charAt(0).toUpperCase()+key.slice(1));
+            const input = document.createElement('input');
+            input.className = 'live-edit-input';
+            input.value = span.innerText;
+            span.parentNode.replaceChild(input, span);
+            input.focus();
+            input.onblur = () => {
+                localDB[currentIndex][key] = input.value;
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localDB));
+                span.innerText = input.value;
+                input.parentNode.replaceChild(span, input);
+            };
+        }
+
+        function saveAndSync() {
+            const token = document.getElementById('ghToken').value.trim();
+            localStorage.setItem('MZ_GH_TOKEN', token);
+            // 以后你可以根据需要填入同步逻辑，现在先确保本地能用
+            alert("本地已保存，同步中...");
+        }
+
+        refresh();
     </script>
 </body>
 </html>

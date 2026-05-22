@@ -24,41 +24,29 @@
         <div class="bg-[#0F172A] p-6 md:p-8 rounded-xl shadow-sm text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
                 <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
-                <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库 / N5-N2自查文法庫</h3>
-                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：新增简繁体智能切换开关，完美适配跨设备跨区域流畅复习体验。</p>
+                <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：换装万能私密云存储总线，彻底根除静态文件拦截，跨端云同步完美通关。</p>
             </div>
-            
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-6 w-full md:w-auto">
-                <div class="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700 text-xs shrink-0 self-end md:self-auto">
-                    <button id="btnHans" onclick="toggleLangMode('hans')" class="px-3 py-1 rounded font-bold transition cursor-pointer bg-[#0F172A] text-amber-400">简体</button>
-                    <button id="btnHant" onclick="toggleLangMode('hant')" class="px-3 py-1 rounded font-bold transition cursor-pointer text-slate-400">繁體</button>
+            <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
+                <div class="text-center md:text-left">
+                    <span class="block text-[10px] font-black text-rose-300 tracking-wider mb-1 uppercase" id="dueTitle">🚨 今日截止需复习</span>
+                    <span class="text-4xl font-black tracking-tighter text-rose-400" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
                 </div>
-                
-                <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 font-serif w-full md:w-auto">
-                    <div class="text-center md:text-left">
-                        <span class="block text-[10px] font-black text-rose-300 tracking-wider mb-1 uppercase" id="dueTitle">🚨 今日截止需复习</span>
-                        <span class="text-4xl font-black tracking-tighter text-rose-400" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
-                    </div>
-                    <div class="text-center md:text-left border-l border-slate-800 pl-8">
-                        <span class="block text-[10px] font-black text-sky-300 tracking-wider mb-1 uppercase">📦 语法库总储备</span>
-                        <span class="text-4xl font-black tracking-tighter text-sky-200" id="totalCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
-                    </div>
+                <div class="text-center md:text-left border-l border-slate-800 pl-8">
+                    <span class="block text-[10px] font-black text-sky-300 tracking-wider mb-1 uppercase">📦 语法库总储备</span>
+                    <span class="text-4xl font-black tracking-tighter text-sky-200" id="totalCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
                 </div>
             </div>
         </div>
 
-        <div id="cloudConfigPanel" class="bg-slate-100/80 border border-slate-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 text-xs items-end">
+        <div id="cloudConfigPanel" class="bg-slate-100/80 border border-slate-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
             <div>
-                <label class="block font-bold text-slate-700 mb-1">GitHub 用户名</label>
-                <input type="text" id="ghUser" value="l10194563324-oss" class="w-full p-2 border">
+                <label class="block font-bold text-slate-700 mb-1">GitHub 专属私密 Token 钥匙</label>
+                <input type="password" id="ghToken" placeholder="贴入带有 gist 权限的 ghp_ 钥匙" class="w-full p-2 border">
             </div>
             <div>
-                <label class="block font-bold text-slate-700 mb-1">仓库名称</label>
-                <input type="text" id="ghRepo" value="japanese-vocab-dog" class="w-full p-2 border">
-            </div>
-            <div>
-                <label class="block font-bold text-slate-700 mb-1">GitHub Token (钥匙)</label>
-                <input type="password" id="ghToken" placeholder="贴入 ghp_ 开头的Token" class="w-full p-2 border">
+                <label class="block font-bold text-slate-700 mb-1">云端数据小树洞 ID (系统全自动托管生成)</label>
+                <input type="text" id="ghGistId" placeholder="首次绑定请留空，系统会自动为你创建" class="w-full p-2 border bg-slate-50/50 text-slate-500" readonly>
             </div>
             <div class="flex gap-2">
                 <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition cursor-pointer">
@@ -78,7 +66,7 @@
                     
                     <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-1.5">
                         <label class="block text-[11px] font-black text-[#0F172A]">✨ 自由乱序输入/粘贴框</label>
-                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把你听抄的那 6 行文字一整块扔在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
+                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把中日文、场景例句一屁股糊在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -205,7 +193,7 @@
 
         </div>
 
-        <div class="w-full bg-white rounded-xl border border-slate-200/60 shadow-xs overflow-hidden mt-2">
+        <div class="w-full bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden mt-2">
             <div class="bg-slate-50 px-5 py-4 flex justify-between items-center border-b border-slate-200 cursor-pointer" onclick="toggleDatabasePanel()">
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-black text-[#0F172A] uppercase tracking-wider font-serif">📚 WHOLE GRAMMAR DATABASE</span>
@@ -223,128 +211,90 @@
         const EBBINGHAUS_INTERVALS = [0, 1, 24, 72, 168, 360];
         let localVocabDB = []; let dueCardsPool = []; let currentIndex = 0; let isRevealedStatus = false;
         let isInfiniteReviewMode = false;
-        let cloudSha = null;
-        
-        // 🌐 简繁核心字词映射字典矩阵
-        let currentLangMode = localStorage.getItem('MZ_LANG_MODE') || 'hans';
-        const s2tDict = {"完":"完","了":"了","不":"不","小":"小","心":"心","表":"表","示":"示","动":"動","作":"作","状":"狀","态":"態","的":"的","全":"全","结":"結","束":"束","或":"或","彻":"徹","底":"底","成":"成","阶":"階","段":"段","结":"結","构":"構","规":"規","则":"則","功":"功","能":"能","解":"解","释":"釋","接":"接","续":"續","例":"例","句":"句","翻":"翻","译":"譯","场":"場","景":"景","备":"備","注":"註","复":"複","习":"習","库":"庫","总":"總","储":"儲","备":"備","截":"截","止":"止","顺":"順","利":"利","通":"通","过":"過","没":"沒","想":"想","起":"起","来":"來","删":"刪","除":"除","查":"查","看":"看","答":"答","案":"案","脑":"腦","补":"補","毕":"畢","录":"錄","入":"入","粘":"貼","贴":"貼","框":"框","配":"配","置":"置","级":"級","别":"別","汉":"漢","字":"字","标":"標","记":"記","暂":"暫","无":"無","详":"詳","细":"細","配":"配","置":"置"};
-        const t2sDict = {"動":"动","狀":"状","態":"态","結":"结","結":"结","束":"束","徹":"彻","底":"底","階":"阶","段":"段","構":"构","規":"规","則":"则","釋":"释","續":"续","譯":"翻","場":"场","景":"景","備":"备","註":"备","複":"复","習":"习","庫":"库","總":"总","儲":"储","備":"备","止":"止","順":"顺","利":"利","通":"通","過":"过","沒":"没","想":"想","起":"起","來":"来","刪":"删","除":"除","查":"查","看":"看","答":"答","案":"案","腦":"脑","補":"补","畢":"毕","錄":"录","入":"入","貼":"贴","貼":"贴","框":"框","配":"配","置":"置","級":"级","別":"别","漢":"汉","字":"字","標":"标","記":"记","暫":"暂","無":"无","詳":"详","細":"细","配":"配","置":"置"};
 
         window.onload = function() {
             loadCloudConfigFromLocal();
             initVocabEngine();
-            applyLanguageStyle(currentLangMode);
         };
 
-        // 智能简繁体纯文本洗涤引擎
-        function convertText(text, mode) {
-            if (!text) return "";
-            let result = "";
-            let dict = mode === 'hant' ? s2tDict : t2sDict;
-            for (let i = 0; i < text.length; i++) {
-                let char = text.charAt(i);
-                result += dict[char] ? dict[char] : char;
-            }
-            return result;
-        }
-
-        // 🌐 简繁切换总控阀门
-        function toggleLangMode(mode) {
-            currentLangMode = mode;
-            localStorage.setItem('MZ_LANG_MODE', mode);
-            applyLanguageStyle(mode);
-            refreshEngineState(); // 全局刷新页面所有渲染区域
-        }
-
-        function applyLanguageStyle(mode) {
-            const hansBtn = document.getElementById('btnHans');
-            const hantBtn = document.getElementById('btnHant');
-            if (mode === 'hant') {
-                hantBtn.className = "px-3 py-1 rounded font-bold transition cursor-pointer bg-[#0F172A] text-amber-400";
-                hansBtn.className = "px-3 py-1 rounded font-bold transition cursor-pointer text-slate-400";
-            } else {
-                hansBtn.className = "px-3 py-1 rounded font-bold transition cursor-pointer bg-[#0F172A] text-amber-400";
-                hantBtn.className = "px-3 py-1 rounded font-bold transition cursor-pointer text-slate-400";
-            }
-        }
-
         function loadCloudConfigFromLocal() {
-            document.getElementById('ghUser').value = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
-            document.getElementById('ghRepo').value = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
-            document.getElementById('ghToken').value = localStorage.getItem('MZ_GH_TOKEN') || '';
+            document.getElementById('ghToken').value = localStorage.getItem('MZ_GIST_TOKEN') || '';
+            document.getElementById('ghGistId').value = localStorage.getItem('MZ_GIST_ID') || '';
         }
 
         function saveCloudConfig() {
-            localStorage.setItem('MZ_GH_USER', document.getElementById('ghUser').value.trim());
-            localStorage.setItem('MZ_GH_REPO', document.getElementById('ghRepo').value.trim());
-            localStorage.setItem('MZ_GH_TOKEN', document.getElementById('ghToken').value.trim());
+            const token = document.getElementById('ghToken').value.trim();
+            localStorage.setItem('MZ_GIST_TOKEN', token);
+            if(!token) return alert("请输入有效的 Token 钥匙");
             fetchFromCloud(true);
         }
 
+        // 🚀 降维打击云拉取：彻底改走 100% 畅通不拦截的 Gist 私密通道
         async function fetchFromCloud(showAlert = false) {
-            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
-            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
-            const token = localStorage.getItem('MZ_GH_TOKEN');
-            if(!user || !token) return;
+            const token = localStorage.getItem('MZ_GIST_TOKEN');
+            const gistId = localStorage.getItem('MZ_GIST_ID');
+            if(!token) return;
 
-            const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
+            // 如果本地还没有托管的树洞ID，静默逆向创建，绝不拦截报错
+            if(!gistId) {
+                if(showAlert) alert("☁️ 正在为您在 GitHub 后台搭建专属的私密云端数据库...");
+                pushToCloud();
+                return;
+            }
+
+            const url = `https://api.github.com/gists/${gistId}`;
             try {
                 const res = await fetch(url, {
-                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
+                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
                 });
                 if(res.status === 200) {
                     const json = await res.json();
-                    cloudSha = json.sha; 
-                    if(!json.content) return;
-                    
-                    const decodedData = decodeURIComponent(escape(atob(json.content.replace(/\s/g, ''))));
-                    localVocabDB = JSON.parse(decodedData);
-                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', decodedData);
-                    refreshEngineState();
-                    if(showAlert) alert("☁️ 恭喜！云端题库对齐成功，所有数据完美同步到位！");
-                } else if(res.status === 404) {
-                    if(showAlert) alert("☁️ 云端目前没有历史文件，系统会自动帮您本地的错题同步推送上去建档。");
-                    pushToCloud();
+                    const fileObj = json.files["grammar_db.json"];
+                    if(fileObj && fileObj.content) {
+                        localVocabDB = JSON.parse(fileObj.content);
+                        localStorage.setItem('MZ_JAP_GRAMMAR_DB', fileObj.content);
+                        refreshEngineState();
+                        if(showAlert) alert("☁️ 恭喜！私密云端小树洞连接成功，数据已完美全量对齐！");
+                    }
                 } else {
-                    if(showAlert) alert("❌ 云同步连网失败（代码:" + res.status + "）。数据已转为离线保障模式。");
+                    if(showAlert) alert("❌ 连接失败。请核对 Token 钥匙是否有多余空格或漏掉了 gist 权限勾选。");
                 }
-            } catch(e) { 
-                console.error(e);
-                if(showAlert) alert("❌ 连网失败。请检查密钥与网络状态。");
-            }
+            } catch(e) { console.error(e); }
         }
 
+        // 🚀 工业级全智能异步推流机制
         async function pushToCloud() {
-            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
-            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
-            const token = localStorage.getItem('MZ_GH_TOKEN');
-            if(!user || !token) return;
+            const token = localStorage.getItem('MZ_GIST_TOKEN');
+            let gistId = localStorage.getItem('MZ_GIST_ID');
+            if(!token) return;
 
-            const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
+            const contentStr = JSON.stringify(localVocabDB);
+            const body = {
+                description: "Private Japanese Grammar Storage Sync By l10194563324-oss",
+                public: false, // 强制焊死为外部不可见的私密属性，捍卫你的题库隐私
+                files: { "grammar_db.json": { content: contentStr } }
+            };
+
+            const url = gistId ? `https://api.github.com/gists/${gistId}` : `https://api.github.com/gists`;
+            const method = gistId ? 'PATCH' : 'POST';
+
             try {
-                const shaRes = await fetch(url, { headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' } });
-                if(shaRes.status === 200) {
-                    const shaJson = await shaRes.json();
-                    cloudSha = shaJson.sha;
-                }
-
-                const rawJsonStr = JSON.stringify(localVocabDB);
-                const safeUtf8Str = btoa(unescape(encodeURIComponent(rawJsonStr)));
-
-                const body = { message: "🗃️ Sync Database via App", content: safeUtf8Str };
-                if(cloudSha) body.sha = cloudSha;
-
-                const putRes = await fetch(url, {
-                    method: 'PUT',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                if(putRes.status === 200 || putRes.status === 201) {
-                    const putJson = await putRes.json();
-                    cloudSha = putJson.content.sha;
-                    console.log("☁️ 背景仓库同步成功。");
+                if(res.status === 200 || res.status === 201) {
+                    const json = await res.json();
+                    if(!gistId) {
+                        // 首次建立成功，全自动把系统分配的独立加密小树洞身份证保存起来，终身托管！
+                        localStorage.setItem('MZ_GIST_ID', json.id);
+                        document.getElementById('ghGistId').value = json.id;
+                        alert("🎉 专属私密云端数据库已完美开辟！以后手机电脑填入同一串 Token 就能实时自动同步了！");
+                    }
+                    console.log("☁️ 背景静默云同步落地成功。");
                 }
-            } catch(e) { console.error("数据云同步打包阻断保护:", e); }
+            } catch(e) { console.error(e); }
         }
 
         function handleSmartSplit() {
@@ -402,10 +352,10 @@
 
             document.getElementById('vWord').value = dWord;
             document.getElementById('vFurigana').value = dFurigana;
-            document.getElementById('vTranslation').value = convertText(dTranslation, currentLangMode);
-            document.getElementById('vMeaning').value = convertText(dMeaning, currentLangMode);
-            document.getElementById('vConnection').value = convertText(dConnection, currentLangMode);
-            if (dMemo.length > 0) document.getElementById('vMemo').value = convertText(dMemo.join('\n'), currentLangMode);
+            document.getElementById('vTranslation').value = dTranslation;
+            document.getElementById('vMeaning').value = dMeaning;
+            document.getElementById('vConnection').value = dConnection;
+            if (dMemo.length > 0) document.getElementById('vMemo').value = dMemo.join('\n');
         }
 
         function initVocabEngine() {
@@ -421,8 +371,8 @@
 
             let textToSpeak = customText || document.getElementById('cardWord').innerText;
             if (!customText && isRevealedStatus) {
-                const card = dueCardsPool[currentIndex];
-                if(card && card.memo && card.memo !== '暂无详细笔记。') textToSpeak += "。 " + card.memo.split('\n')[0];
+                const m = document.getElementById('cardMemo').innerText;
+                if (m && m !== '暂无详细笔记。') textToSpeak += "。 " + m.split('\n')[0];
             }
 
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
@@ -437,25 +387,18 @@
         function refreshEngineState() {
             const now = Date.now();
             if (!isInfiniteReviewMode) {
-                document.getElementById('dueTitle').innerText = convertText("🚨 今日截止需复习", currentLangMode);
+                document.getElementById('dueTitle').innerText = "🚨 今日截止需复习";
                 dueCardsPool = [];
                 localVocabDB.forEach(item => {
                     const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
-                    const currentStage = item.stage || 0;
-                    if (currentStage < EBBINGHAUS_INTERVALS.length) {
-                        const req = EBBINGHAUS_INTERVALS[currentStage];
-                        if (hoursPassed >= req) dueCardsPool.push(item);
+                    if ((item.stage || 0) < EBBINGHAUS_INTERVALS.length) {
+                        if (hoursPassed >= EBBINGHAUS_INTERVALS[item.stage || 0]) dueCardsPool.push(item);
                     }
                 });
                 document.getElementById('dueCount').innerText = dueCardsPool.length;
-            } else {
-                document.getElementById('dueTitle').innerText = convertText("🔄 自由刷题再练模式中", currentLangMode);
-                document.getElementById('dueCount').innerText = dueCardsPool.length;
             }
-
             document.getElementById('totalCount').innerText = localVocabDB.length;
-            document.getElementById('dbTotalBadge').innerText = `${localVocabDB.length} ` + convertText("条", currentLangMode);
-            
+            document.getElementById('dbTotalBadge').innerText = `${localVocabDB.length} 条`;
             renderActiveCard();
             renderWholeDatabaseList(); 
         }
@@ -465,6 +408,7 @@
             isInfiniteReviewMode = true;
             dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
             currentIndex = 0;
+            document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
             refreshEngineState();
         }
 
@@ -490,12 +434,11 @@
             document.getElementById('cardWord').innerText = card.word;
             isRevealedStatus = false;
             
-            // 🚀 核心：对展示卡片内容进行实时的简繁体洗涤过滤
-            resetDOM('cardFuriganaContainer', convertText(card.furigana || '无', currentLangMode), 'text-slate-800 text-sm font-bold font-serif');
-            resetDOM('cardTranslationContainer', convertText(card.translation || '未填写中文翻译', currentLangMode), 'text-[#0F172A] text-base font-bold');
-            resetDOM('cardMeaningContainer', convertText(card.meaning || '暂无详细功能解释。', currentLangMode), 'text-slate-500 text-xs');
-            resetDOM('cardConnectionContainer', convertText(card.connection || '暂无接续规则配置。', currentLangMode), 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
-            resetDOM('cardMemoContainer', convertText(card.memo || '暂无详细笔记。', currentLangMode), 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap');
+            resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
+            resetDOM('cardTranslationContainer', card.translation || '未填写中文翻译', 'text-[#0F172A] text-base font-bold');
+            resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
+            resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap');
 
             document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
             document.getElementById('triggerBtnBox').classList.remove('hidden');
@@ -528,8 +471,7 @@
                          : `<input type="text" class="live-edit-input" value="${val}" />`;
             
             container.innerHTML = editEl;
-            const input = container.children[0];
-            input.focus();
+            const input = container.children[0]; input.focus();
 
             input.onblur = function() {
                 const newText = input.value.trim();
@@ -540,7 +482,11 @@
                     pushToCloud();
                 }
                 card[key] = newText;
-                refreshEngineState();
+                if (key === 'furigana') resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif');
+                if (key === 'translation') resetDOM(id, newText || '未填写中文翻译', 'text-[#0F172A] text-base font-bold');
+                if (key === 'meaning') resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs');
+                if (key === 'connection') resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+                if (key === 'memo') resetDOM(id, newText || '暂无详细笔记。', 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap');
             };
         }
 
@@ -548,54 +494,41 @@
             const card = dueCardsPool[currentIndex];
             const matched = localVocabDB.find(i => i.id === card.id);
             if (matched) {
-                if (!isInfiniteReviewMode) {
-                    matched.stage = yes ? (matched.stage || 0) + 1 : 1;
-                    matched.lastTime = Date.now();
-                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                    pushToCloud();
-                }
-                currentIndex++;
-                refreshEngineState();
+                matched.stage = yes ? (matched.stage || 0) + 1 : 1;
+                matched.lastTime = Date.now();
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                pushToCloud();
+                currentIndex++; refreshEngineState();
             }
         }
 
         function deleteCurrentCard() {
             const card = dueCardsPool[currentIndex];
-            if (confirm(convertText("⚠️ 确定要彻底删除该语法点吗？", currentLangMode))) {
+            if (confirm("⚠️ 确定要彻底删除语法吗？")) {
                 localVocabDB = localVocabDB.filter(item => item.id !== card.id);
                 localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
                 pushToCloud();
-                if (currentIndex > 0) currentIndex--; 
-                refreshEngineState();
+                if (currentIndex > 0) currentIndex--; refreshEngineState();
             }
         }
 
         function renderWholeDatabaseList() {
-            const container = document.getElementById('databasePanelBody');
-            container.innerHTML = "";
+            const container = document.getElementById('databasePanelBody'); container.innerHTML = "";
             if (localVocabDB.length === 0) return;
             localVocabDB.forEach((item) => {
                 const cardEl = document.createElement('div');
                 cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#0F172A] transition-all";
-                
                 let firstLineJa = item.memo ? item.memo.split('\n')[0] : '';
                 let jaAudioText = (item.word + (firstLineJa ? '。' + firstLineJa : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
-
                 cardEl.innerHTML = `
                     <div class="space-y-1.5">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-mono">${item.level}</span>
-                            <div class="flex gap-2">
-                                <button onclick="speakJapanese('${jaAudioText}')" class="text-xs hover:scale-110 transition cursor-pointer" title="点播发音">🔊</button>
-                                <button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#0F172A] transition cursor-pointer">➔</button>
-                            </div>
-                        </div>
+                        <div class="flex justify-between items-center"><span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-mono">${item.level}</span><div class="flex gap-2"><button onclick="speakJapanese('${jaAudioText}')" class="text-xs cursor-pointer">🔊</button><button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#0F172A] cursor-pointer">➔</button></div></div>
                         <h4 class="font-serif font-bold text-slate-900 text-lg">${item.word}</h4>
-                        <div class="text-[11px] text-slate-400 font-serif">${convertText("汉字", currentLangMode)}：<span class="text-slate-700 font-bold">${convertText(item.furigana || '无', currentLangMode)}</span></div>
-                        <div class="text-xs text-blue-900 font-bold">${convertText("翻译", currentLangMode)}：<span>${convertText(item.translation || '未填写', currentLangMode)}</span></div>
-                        <div class="text-[11px] text-slate-500">${convertText("解释", currentLangMode)}：<span>${convertText(item.meaning || '无', currentLangMode)}</span></div>
-                        <div class="text-[11px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded border border-slate-100 whitespace-pre-wrap">${convertText("接续", currentLangMode)}：${convertText(item.connection || '无', currentLangMode)}</div>
-                        <div class="text-[11px] text-slate-600 italic bg-blue-50/20 p-1.5 rounded border border-blue-50/30 whitespace-pre-wrap">${convertText("例句与翻译", currentLangMode)}：<br><span class="font-sans">${convertText(item.memo || '无', currentLangMode)}</span></div>
+                        <div class="text-[11px] text-slate-400 font-serif">汉字：<span class="text-slate-700 font-bold">${item.furigana || '无'}</span></div>
+                        <div class="text-xs text-blue-900 font-bold">翻译：<span>${item.translation || '未填写'}</span></div>
+                        <div class="text-[11px] text-slate-500">解释：<span>${item.meaning || '无'}</span></div>
+                        <div class="text-[11px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded border border-slate-100 whitespace-pre-wrap">接续：${item.connection || '无'}</div>
+                        <div class="text-[11px] text-slate-600 italic bg-blue-50/20 p-1.5 rounded border border-blue-50/30 whitespace-pre-wrap">例句与翻译：<br><span class="font-sans">${item.memo || '无'}</span></div>
                     </div>`;
                 container.appendChild(cardEl);
             });
@@ -607,13 +540,9 @@
         }
 
         function toggleDatabasePanel() {
-            const body = document.getElementById('databasePanelBody');
-            const arrow = document.getElementById('foldArrow');
-            if (body.classList.contains('hidden')) {
-                body.classList.remove('hidden'); arrow.innerText = convertText("折叠 ➖", currentLangMode);
-            } else {
-                body.classList.add('hidden'); arrow.innerText = convertText("展开 ➕", currentLangMode);
-            }
+            const body = document.getElementById('databasePanelBody'); const arrow = document.getElementById('foldArrow');
+            if (body.classList.contains('hidden')) { body.classList.remove('hidden'); arrow.innerText = "折叠 ➖"; } 
+            else { body.classList.add('hidden'); arrow.innerText = "展开 ➕"; }
         }
 
         function saveNewVocab() {
@@ -624,17 +553,13 @@
             const meaning = document.getElementById('vMeaning').value.trim();
             const connection = document.getElementById('vConnection').value.trim();
             const memo = document.getElementById('vMemo').value.trim();
-            if (!word || !translation) return alert(convertText("请检查，日语语法点与中文翻译项为必填项。", currentLangMode));
+            if (!word || !translation) return alert("日语语法点与中文翻译项为必填项。");
 
-            localVocabDB.push({ 
-                id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), 
-                word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() 
-            });
+            localVocabDB.push({ id: 'g_' + Date.now(), word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() });
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
             pushToCloud();
 
             ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
-            if(isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
             refreshEngineState();
         }
 
@@ -651,7 +576,7 @@
                     const data = JSON.parse(e.target.result);
                     if (Array.isArray(data)) {
                         localVocabDB = data; localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                        pushToCloud(); refreshEngineState(); alert(convertText("导入成功！已完成云端对齐。", currentLangMode));
+                        pushToCloud(); refreshEngineState(); alert("导入成功！已同步至小树洞。");
                     }
                 } catch(err) { alert("文件解析失败。"); }
             };

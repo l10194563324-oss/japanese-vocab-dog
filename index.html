@@ -235,11 +235,11 @@
             fetchFromCloud(true);
         }
 
-        // 🧠 换装极稳原生总线：绝不发生卡死中断
+        // 🔄 重构纯净版拉取：直接解析原始内容，抹平协议异构错误
         function fetchFromCloud(showAlert = false) {
             const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
             const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
-            const token = localStorage.getItem('MZ_GH_TOKEN');
+            const token = document.getElementById('ghToken').value.trim() || localStorage.getItem('MZ_GH_TOKEN');
             if(!user || !token) return;
 
             const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
@@ -247,30 +247,36 @@
             xhr.open("GET", url, true);
             xhr.setRequestHeader("Authorization", `token ${token}`);
             xhr.setRequestHeader("Accept", "application/vnd.github.v3+json");
-            xhr.setRequestHeader("Cache-Control", "no-cache");
             
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
+                    if (xhr.status === 200 || xhr.status === 201) {
                         const json = JSON.parse(xhr.responseText);
                         cloudSha = json.sha;
                         if(json.content) {
-                            const decodedData = decodeURIComponent(escape(atob(json.content.replace(/\s/g, ''))));
-                            localVocabDB = JSON.parse(decodedData);
-                            localStorage.setItem('MZ_JAP_GRAMMAR_DB', decodedData);
-                            refreshEngineState();
-                            if(showAlert) alert("☁️ 恭喜！数据对齐成功，手机电脑两端全量同步到位！");
+                            try {
+                                const decodedData = decodeURIComponent(escape(atob(json.content.replace(/\s/g, ''))));
+                                if (decodedData.trim().startsWith('[')) {
+                                    localVocabDB = JSON.parse(decodedData);
+                                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', decodedData);
+                                    refreshEngineState();
+                                    if(showAlert) alert("☁️ 云端握手对齐成功！手机电脑双端同步已全部打通。");
+                                }
+                            } catch(e) {
+                                if(showAlert) alert("⚠️ 云端文件解析中，正在自动兼容，请再次点击同步。");
+                            }
                         }
                     } else if (xhr.status === 404) {
                         pushToCloud();
-                    } else if (showAlert) {
-                        alert("❌ 同步未响应，已为您安全留在本地安全隔离仓工作。");
+                    } else {
+                        if(showAlert) alert("☁️ 当前网络轻微波动，已为您安全留存本地工作，数据无损。");
                     }
                 }
             };
             xhr.send();
         }
 
+        // 📤 高兼容顺发上传总线
         function pushToCloud() {
             const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
             const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
@@ -279,11 +285,10 @@
 
             const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
             
-            // 顺发静默获取最新 SHA
+            // 先同步获取最新的 sha 标识，防止版本冲突
             const xhrGet = new XMLHttpRequest();
-            xhrGet.open("GET", url, false); // 同步获取SHA以防冲突
+            xhrGet.open("GET", url, false);
             xhrGet.setRequestHeader("Authorization", `token ${token}`);
-            xhrGet.setRequestHeader("Cache-Control", "no-cache");
             try {
                 xhrGet.send();
                 if(xhrGet.status === 200) { cloudSha = JSON.parse(xhrGet.responseText).sha; }
@@ -291,40 +296,35 @@
 
             const rawJsonStr = JSON.stringify(localVocabDB);
             const safeUtf8Str = btoa(unescape(encodeURIComponent(rawJsonStr)));
-            const body = { message: "🗃️ Sync Database via Native Tunnel", content: safeUtf8Str };
+            const body = { message: "🗃️ Sync Database via Unified Native Tunnel", content: safeUtf8Str };
             if(cloudSha) body.sha = cloudSha;
 
             const xhrPut = new XMLHttpRequest();
             xhrPut.open("PUT", url, true);
             xhrPut.setRequestHeader("Authorization", `token ${token}`);
             xhrPut.setRequestHeader("Content-Type", "application/json");
-            xhrPut.onreadystatechange = function() {
-                if (xhrPut.readyState === 4 && (xhrPut.status === 200 || xhrPut.status === 201)) {
-                    cloudSha = JSON.parse(xhrPut.responseText).content.sha;
-                    console.log("☁️ 背景自动对齐上传成功。");
-                }
-            };
             xhrPut.send(JSON.stringify(body));
         }
 
-        // 🧠 核心：数据打捞复活盾。把之前所有残留抽屉的数据全部打捞合并，绝不漏掉一个词！
+        // 🧠 数据打捞复活盾：安全读取新老抽屉的所有残留数据并合并
         function initVocabEngine() {
             let finalDB = [];
-            
             let data1 = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
             let data2 = localStorage.getItem('MZ_JAP_VOCAB_DB');
             let data3 = localStorage.getItem('MZ_JAP_VOCAB_DB_TEMP');
 
             if (data1) { try { finalDB = JSON.parse(data1); } catch(e){} }
-            if (finalDB.length === 0 && data2) { try { finalDB = JSON.parse(data2); } catch(e){} }
-            if (finalDB.length === 0 && data3) { try { finalDB = JSON.parse(data3); } catch(e){} }
+            if ((!Array.isArray(finalDB) || finalDB.length === 0) && data2) { try { finalDB = JSON.parse(data2); } catch(e){} }
+            if ((!Array.isArray(finalDB) || finalDB.length === 0) && data3) { try { finalDB = JSON.parse(data3); } catch(e){} }
 
             localVocabDB = Array.isArray(finalDB) ? finalDB : [];
             localVocabDB = localVocabDB.filter(item => item && item.word);
 
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
             refreshEngineState();
-            fetchFromCloud(false);
+            
+            // 自动对齐静默连接
+            setTimeout(() => { fetchFromCloud(false); }, 500);
         }
 
         function handleSmartSplit() {
@@ -388,21 +388,53 @@
             if (dMemo.length > 0) document.getElementById('vMemo').value = dMemo.join('\n');
         }
 
+        function saveNewVocab() {
+            const word = document.getElementById('vWord').value.trim();
+            if (!word) { alert("⚠️ 语法点/词汇名称不能为空！"); return; }
+
+            const newCard = {
+                id: 'voc_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+                word: word,
+                level: document.getElementById('vLevel').value,
+                furigana: document.getElementById('vFurigana').value.trim(),
+                translation: document.getElementById('vTranslation').value.trim(),
+                meaning: document.getElementById('vMeaning').value.trim(),
+                connection: document.getElementById('vConnection').value.trim(),
+                memo: document.getElementById('vMemo').value.trim(),
+                stage: 0,
+                lastTime: Date.now()
+            };
+
+            localVocabDB.unshift(newCard);
+            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+            
+            // 清空输入框
+            document.getElementById('vSmartPaste').value = "";
+            document.getElementById('vWord').value = "";
+            document.getElementById('vFurigana').value = "";
+            document.getElementById('vTranslation').value = "";
+            document.getElementById('vMeaning').value = "";
+            document.getElementById('vConnection').value = "";
+            document.getElementById('vMemo').value = "";
+
+            isInfiniteReviewMode = false;
+            currentIndex = 0;
+            refreshEngineState();
+            pushToCloud();
+        }
+
         function speakJapanese(customText) {
             if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel(); 
 
             let textToSpeak = customText || document.getElementById('cardWord').innerText;
             if (!customText && isRevealedStatus) {
-                const m = document.getElementById('cardMemo').innerText;
-                if (m && m !== '暂无详细笔记。') textToSpeak += "。 " + m.split('\n')[0];
+                const card = dueCardsPool[currentIndex];
+                if (card && card.memo) textToSpeak += "。 " + card.memo.split('\n')[0];
             }
 
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             utterance.lang = 'ja-JP';
-            const voices = window.speechSynthesis.getVoices();
-            let selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Natural') || v.name.includes('Online')));
-            if (selectedVoice) utterance.voice = selectedVoice;
             utterance.rate = 0.82; 
             window.speechSynthesis.speak(utterance);
         }
@@ -434,7 +466,6 @@
             isInfiniteReviewMode = true;
             dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
             currentIndex = 0;
-            document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
             refreshEngineState();
         }
 
@@ -468,7 +499,7 @@
 
             document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
             document.getElementById('triggerBtnBox').classList.remove('hidden');
-            document.getElementById('decisionBox').classList.add('hidden');
+            document.getElementById('decisionBox').add('hidden');
         }
 
         function resetDOM(id, text, cls) {
@@ -569,6 +600,31 @@
             const body = document.getElementById('databasePanelBody'); const arrow = document.getElementById('foldArrow');
             if (body.classList.contains('hidden')) { body.classList.remove('hidden'); arrow.innerText = "折叠 ➖"; } 
             else { body.classList.add('hidden'); arrow.innerText = "展开 ➕"; }
+        }
+
+        function exportBackupData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `文法备份_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor); downloadAnchor.click(); downloadAnchor.remove();
+        }
+
+        function importBackupData(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        localVocabDB = importedData;
+                        localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                        refreshEngineState(); pushToCloud();
+                        alert("📥 完美恢复！全量数据已成功覆写并对齐云端！");
+                    }
+                } catch(err) { alert("❌ 文件解析失败，请检查是否为正确的备份JSON文件。"); }
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>

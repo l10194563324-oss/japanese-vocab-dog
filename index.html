@@ -10,6 +10,8 @@
         input, select, textarea { background-color: #FFFFFF; border: 1px solid #E2E8F0 !important; transition: all 0.15s ease; border-radius: 6px; }
         input:focus, select:focus, textarea:focus { border-color: #0F172A !important; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05); outline: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* ✏️ 原地快捷修改大文本编辑舱样式 */
         .live-edit-input { border: 1px dashed #0F172A !important; background-color: #FFF !important; padding: 6px 10px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #0F172A; line-height: 1.6; }
         .edit-hint { opacity: 0; transition: opacity 0.2s ease; cursor: pointer; }
         .editable-zone:hover .edit-hint { opacity: 0.6; }
@@ -23,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
                 <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1 font-sans">KV 云总线实时同步版：已彻底移除 GitHub 钥匙限制，实现电脑与手机全自动无缝实时双向同步。</p>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：纯净 GitHub 仓库版本复位。100% 还原最初的双端同步核心。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -37,15 +39,25 @@
             </div>
         </div>
 
-        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
-            <div class="space-y-1">
-                <span class="text-amber-800 font-bold block text-sm">📱 手机 ⇄ 电脑 多端无缝双向自动同步中心</span>
-                <p class="text-amber-700">无需繁琐的 GitHub 授权。在多端填入同一个自定义暗号，即可实现完全实时的双向数据对齐。</p>
+        <div id="cloudConfigPanel" class="bg-slate-100/80 border border-slate-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 text-xs items-end">
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">GitHub 用户名</label>
+                <input type="text" id="ghUser" value="l10194563324-oss" class="w-full p-2 border">
             </div>
-            <div class="flex gap-2 w-full md:w-auto items-center shrink-0">
-                <input type="text" id="syncKey" placeholder="设置你的专属同步暗号(例如: zhanhua2026)" class="p-2.5 border text-xs font-bold w-full md:w-64 bg-white">
-                <button onclick="connectKVCloud()" class="py-2.5 px-4 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition cursor-pointer shrink-0">
-                    🔗 开启实时云同步
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">仓库名称</label>
+                <input type="text" id="ghRepo" value="japanese-vocab-dog" class="w-full p-2 border">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">GitHub Token (钥匙)</label>
+                <input type="password" id="ghToken" placeholder="贴入 ghp_ 开头的Token" class="w-full p-2 border">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition cursor-pointer">
+                    💾 绑定并云同步
+                </button>
+                <button onclick="fetchFromCloud(true)" class="py-2 px-3 bg-slate-600 text-white font-bold rounded-lg hover:bg-slate-700 cursor-pointer" title="从云端拉取最新数据">
+                    🔄 拉取
                 </button>
             </div>
         </div>
@@ -58,7 +70,7 @@
                     
                     <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-1.5">
                         <label class="block text-[11px] font-black text-[#0F172A]">✨ 自由乱序输入/粘贴框</label>
-                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把听抄的文字扔在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
+                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把你听抄的那 6 行文字一整块扔在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
                     </div>
 
                     <div class="w-full border-t border-slate-100 my-2"></div>
@@ -88,7 +100,7 @@
                         <input type="text" id="vMeaning" class="w-full p-2.5 rounded-lg text-xs text-slate-600">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">接续规则</label>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">接续规则 (支持自动多行换行)</label>
                         <textarea id="vConnection" rows="3" class="w-full p-2.5 rounded-lg text-xs text-slate-600 leading-relaxed"></textarea>
                     </div>
                     <div>
@@ -98,6 +110,19 @@
                     <button onclick="saveNewVocab()" class="w-full text-xs font-black tracking-widest py-3 bg-[#0F172A] hover:bg-slate-800 text-white rounded-lg transition cursor-pointer shadow-sm">
                         📥 安全存入自查文法库
                     </button>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200/60 shadow-xs text-xs space-y-3">
+                    <span class="text-xs font-black tracking-widest text-slate-400 uppercase block font-serif">DATA PROTECTION</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportBackupData()" class="p-2 border border-dashed border-slate-300 rounded-lg text-center font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                            📤 备份导出文法库
+                        </button>
+                        <label class="p-2 border border-dashed border-slate-300 rounded-lg text-center font-bold text-slate-600 hover:bg-slate-50 cursor-pointer block">
+                            📥 导入恢复文法库
+                            <input type="file" id="importFile" class="hidden" onchange="importBackupData(this)">
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -141,7 +166,7 @@
                                 </div>
                                 <div class="text-xs text-slate-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('meaning')">
                                     功能解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-xs text-slate-600 leading-relaxed"></span>
-                                }</div>
+                                </div>
                                 <div class="text-xs text-slate-400 editable-zone py-1 mt-1 block" onclick="makeEditable('connection')">
                                     接续规则：
                                     <div id="cardConnectionContainer" class="text-slate-700 text-xs font-mono bg-white p-2 rounded border border-slate-200/40 mt-1 leading-relaxed whitespace-pre-wrap min-h-[32px]"></div>
@@ -190,166 +215,186 @@
         const EBBINGHAUS_INTERVALS = [0, 1, 24, 72, 168, 360];
         let localVocabDB = []; let dueCardsPool = []; let currentIndex = 0; let isRevealedStatus = false;
         let isInfiniteReviewMode = false;
+        let cloudSha = null;
 
         window.onload = function() {
-            const savedKey = localStorage.getItem('MZ_KV_SYNC_KEY') || '';
-            document.getElementById('syncKey').value = savedKey;
-            
-            let rawData = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
-            localVocabDB = rawData ? JSON.parse(rawData) : [];
-            refreshEngineState();
-            
-            if (savedKey) {
-                syncWithKVCloud(savedKey, false);
-            }
+            loadCloudConfigFromLocal();
+            initVocabEngine();
         };
 
-        // 🧠 全新 KV 云端总线：安全平滑的双向全自动对齐内核
-        async function syncWithKVCloud(key, showAlert = false) {
-            if (!key) return;
-            const apiEndpoint = `https://api.keyvalue.xyz/new-disabled-endpoint-fallback-mesh/${key}`; 
-            // 采用公共免密高性能网关，在前端实现高速多设备状态互清洗
-            const workerUrl = `https://kv.util.io/b/${key}`; 
+        function loadCloudConfigFromLocal() {
+            document.getElementById('ghUser').value = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            document.getElementById('ghRepo').value = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
+            document.getElementById('ghToken').value = localStorage.getItem('MZ_GH_TOKEN') || '';
+        }
 
+        function saveCloudConfig() {
+            localStorage.setItem('MZ_GH_USER', document.getElementById('ghUser').value.trim());
+            localStorage.setItem('MZ_GH_REPO', document.getElementById('ghRepo').value.trim());
+            localStorage.setItem('MZ_GH_TOKEN', document.getElementById('ghToken').value.trim());
+            fetchFromCloud(true);
+        }
+
+        // 🧠 老版拉取逻辑：直接读取仓库里的 database.json
+        async function fetchFromCloud(showAlert = false) {
+            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
+            const token = localStorage.getItem('MZ_GH_TOKEN');
+            if(!user || !token) return;
+
+            const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
             try {
-                // 1. 先去云端打捞最新的错题库数据
-                const response = await fetch(workerUrl);
-                if (response.ok) {
-                    const cloudData = await response.json();
-                    if (Array.isArray(cloudData) && cloudData.length >= localVocabDB.length) {
-                        // 判定云端是最新、或手机刚填入了新语法，全自动清洗本地
-                        localVocabDB = cloudData;
-                        localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                        refreshEngineState();
-                        if (showAlert) alert("☁️ 多端同步成功！已完美加载最新的共享文法库状态！");
-                        return;
-                    }
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
+                });
+                if(res.status === 200) {
+                    const json = await res.json();
+                    cloudSha = json.sha; 
+                    if(!json.content) return;
+                    
+                    const decodedData = decodeURIComponent(escape(atob(json.content.replace(/\s/g, ''))));
+                    localVocabDB = JSON.parse(decodedData);
+                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', decodedData);
+                    refreshEngineState();
+                    if(showAlert) alert("☁️ 恭喜！GitHub 仓库同步成功，手机电脑数据完美对齐！");
+                } else if(res.status === 404) {
+                    if(showAlert) alert("☁️ 发现全新云端空仓，正在自动为您将本地数据推送建立备份文件...");
+                    pushToCloud();
+                } else {
+                    if(showAlert) alert("❌ 连网失败（状态码:" + res.status + "），请检查 Token 是否有效。");
                 }
-            } catch (e) { console.log("首次建档冷启动，准备推流..."); }
+            } catch(e) { 
+                console.error(e);
+                if(showAlert) alert("❌ 连网失败，请检查网络状态或 Token 是否正确。");
+            }
+        }
 
-            // 2. 如果本地数据更多，或者云端是空的，自动将本地新储备推送覆盖云端
+        // 🧠 老版推送逻辑：自动抓取 SHA 并进行仓库文件更新
+        async function pushToCloud() {
+            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
+            const token = localStorage.getItem('MZ_GH_TOKEN');
+            if(!user || !token) return;
+
+            const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
             try {
-                await fetch(workerUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(localVocabDB)
+                const shaRes = await fetch(url, { headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' } });
+                if(shaRes.status === 200) {
+                    const shaJson = await shaRes.json();
+                    cloudSha = shaJson.sha;
+                }
+
+                const rawJsonStr = JSON.stringify(localVocabDB);
+                const safeUtf8Str = btoa(unescape(encodeURIComponent(rawJsonStr)));
+
+                const body = { message: "🗃️ Sync Database via App Repo", content: safeUtf8Str };
+                if(cloudSha) body.sha = cloudSha;
+
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
                 });
-                if (showAlert) alert("🎉 实时同步通道已激活！当前电脑上的内容已同步到云端。现在去手机上填入相同的暗号即可实现无缝互通！");
-            } catch (err) {
-                if (showAlert) alert("同步失败，请检查网络连接");
-            }
-        }
-
-        function connectKVCloud() {
-            const key = document.getElementById('syncKey').value.trim();
-            if (!key) return alert("请输入一个自定义的专属暗号");
-            localStorage.setItem('MZ_KV_SYNC_KEY', key);
-            syncWithKVCloud(key, true);
-        }
-
-        async function triggerBackgroundPush() {
-            const key = localStorage.getItem('MZ_KV_SYNC_KEY');
-            if (!key) return;
-            const workerUrl = `https://kv.util.io/b/${key}`;
-            try {
-                await fetch(workerUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(localVocabDB)
-                });
-                console.log("☁️ 实时变动全自动同步到云端中...");
-            } catch (e) {}
-        }
-
-        function saveNewVocab() {
-            const word = document.getElementById('vWord').value.trim();
-            const level = document.getElementById('vLevel').value;
-            const furigana = document.getElementById('vFurigana').value.trim();
-            const translation = document.getElementById('vTranslation').value.trim();
-            const meaning = document.getElementById('vMeaning').value.trim();
-            const connection = document.getElementById('vConnection').value.trim();
-            const memo = document.getElementById('vMemo').value.trim();
-            if (!word || !translation) return alert("日语语法点与中文翻译项为必填项。");
-
-            localVocabDB.push({ id: 'g_' + Date.now(), word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() });
-            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-            
-            // 🚀 核心改动：本地一新增，顺发秒级云推送，手机端刷新即有
-            triggerBackgroundPush();
-
-            ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
-            refreshEngineState();
-        }
-
-        function handleDecision(yes) {
-            const card = dueCardsPool[currentIndex];
-            const matched = localVocabDB.find(i => i.id === card.id);
-            if (matched) {
-                matched.stage = yes ? (matched.stage || 0) + 1 : 1;
-                matched.lastTime = Date.now();
-                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                triggerBackgroundPush();
-                currentIndex++; refreshEngineState();
-            }
-        }
-
-        function deleteCurrentCard() {
-            const card = dueCardsPool[currentIndex];
-            if (confirm("⚠️ 确定要彻底删除语法吗？")) {
-                localVocabDB = localVocabDB.filter(item => item.id !== card.id);
-                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                triggerBackgroundPush();
-                if (currentIndex > 0) currentIndex--; refreshEngineState();
-            }
+                if(putRes.status === 200 || putRes.status === 201) {
+                    const putJson = await putRes.json();
+                    cloudSha = putJson.content.sha;
+                    console.log("☁️ 背景云端更新成功。");
+                }
+            } catch(e) { console.error(e); }
         }
 
         function handleSmartSplit() {
             const rawText = document.getElementById('vSmartPaste').value;
             if (!rawText.trim()) return;
+
             let chunks = rawText.split('\n').map(c => c.trim()).filter(c => c.length > 0);
             if (chunks.length <= 1) chunks = rawText.split(/[\uff0c,；;／\/|\t]/).map(c => c.trim()).filter(c => c.length > 0);
             if (chunks.length === 0) return;
-            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dMemo = []; let dConnection = "";
+
+            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dMemo = [];
+            let dConnection = "";
+
             const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
             const hasChinese = /[\u4e00-\u9fa5]/;
+
             if (chunks.length >= 4) {
-                let lastIdx = chunks.length - 1; let prevLastIdx = chunks.length - 2;
-                dMemo.push(chunks[prevLastIdx]); dMemo.push(chunks[lastIdx]);
+                let lastIdx = chunks.length - 1;
+                let prevLastIdx = chunks.length - 2;
+                
+                dMemo.push(chunks[prevLastIdx]);
+                dMemo.push(chunks[lastIdx]);
+
                 let remainingChunks = chunks.slice(0, prevLastIdx);
+                
                 remainingChunks.forEach((chunk) => {
-                    if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干') || chunk.includes('て形')) { dConnection = chunk; return; }
-                    if (hasJapanese.test(chunk) && chunk.length <= 12) { if (!dWord) { dWord = chunk; return; } if (dWord && !dFurigana) { dFurigana = chunk; return; } }
-                    if (hasChinese.test(chunk) && chunk.length <= 10) { if (!dTranslation) { dTranslation = chunk; return; } }
-                    if (hasChinese.test(chunk) && chunk.length > 10) { if (!dMeaning) { dMeaning = chunk; return; } }
+                    if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干') || chunk.includes('て形')) {
+                        dConnection = chunk; return;
+                    }
+                    if (hasJapanese.test(chunk) && chunk.length <= 12) {
+                        if (!dWord) { dWord = chunk; return; }
+                        if (dWord && !dFurigana) { dFurigana = chunk; return; }
+                    }
+                    if (hasChinese.test(chunk) && chunk.length <= 10) {
+                        if (!dTranslation) { dTranslation = chunk; return; }
+                    }
+                    if (hasChinese.test(chunk) && chunk.length > 10) {
+                        if (!dMeaning) { dMeaning = chunk; return; }
+                    }
                 });
-                if (!dWord && remainingChunks[0]) dWord = remainingChunks[0]; if (!dTranslation && remainingChunks[1]) dTranslation = remainingChunks[1];
+
+                if (!dWord && remainingChunks[0]) dWord = remainingChunks[0];
+                if (!dTranslation && remainingChunks[1]) dTranslation = remainingChunks[1];
             } else {
                 chunks.forEach((chunk) => {
                     if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 12)) { dMemo.push(chunk); return; }
-                    if (hasJapanese.test(chunk) && chunk.length <= 12) { if (!dWord) { dWord = chunk; return; } if (dWord && !dFurigana) { dFurigana = chunk; return; } }
+                    if (hasJapanese.test(chunk) && chunk.length <= 12) {
+                        if (!dWord) { dWord = chunk; return; }
+                        if (dWord && !dFurigana) { dFurigana = chunk; return; }
+                    }
                     if (hasChinese.test(chunk) && chunk.length <= 10) { if (!dTranslation) { dTranslation = chunk; return; } }
                     if (hasChinese.test(chunk) && chunk.length > 10) { if (!dMeaning) { dMeaning = chunk; return; } }
                 });
             }
-            document.getElementById('vWord').value = dWord; document.getElementById('vFurigana').value = dFurigana;
-            document.getElementById('vTranslation').value = dTranslation; document.getElementById('vMeaning').value = dMeaning;
-            document.getElementById('vConnection').value = dConnection; if (dMemo.length > 0) document.getElementById('vMemo').value = dMemo.join('\n');
+
+            document.getElementById('vWord').value = dWord;
+            document.getElementById('vFurigana').value = dFurigana;
+            document.getElementById('vTranslation').value = dTranslation;
+            document.getElementById('vMeaning').value = dMeaning;
+            document.getElementById('vConnection').value = dConnection;
+            if (dMemo.length > 0) document.getElementById('vMemo').value = dMemo.join('\n');
+        }
+
+        function initVocabEngine() {
+            let rawData = localStorage.getItem('MZ_JAP_GRAMMAR_DB') || localStorage.getItem('MZ_JAP_VOCAB_DB');
+            localVocabDB = rawData ? JSON.parse(rawData) : [];
+            refreshEngineState();
+            fetchFromCloud(false);
         }
 
         function speakJapanese(customText) {
-            if (!('speechSynthesis' in window)) return; window.speechSynthesis.cancel();
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); 
+
             let textToSpeak = customText || document.getElementById('cardWord').innerText;
-            const utterance = new SpeechSynthesisUtterance(textToSpeak); utterance.lang = 'ja-JP';
+            if (!customText && isRevealedStatus) {
+                const m = document.getElementById('cardMemo').innerText;
+                if (m && m !== '暂无详细笔记。') textToSpeak += "。 " + m.split('\n')[0];
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'ja-JP';
             const voices = window.speechSynthesis.getVoices();
             let selectedVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Natural') || v.name.includes('Online')));
-            if (selectedVoice) utterance.voice = selectedVoice; utterance.rate = 0.82;
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.rate = 0.82; 
             window.speechSynthesis.speak(utterance);
         }
 
         function refreshEngineState() {
             const now = Date.now();
             if (!isInfiniteReviewMode) {
-                document.getElementById('dueTitle').innerText = "🚨 今日截止需复习"; dueCardsPool = [];
+                document.getElementById('dueTitle').innerText = "🚨 今日截止需复习";
+                dueCardsPool = [];
                 localVocabDB.forEach(item => {
                     const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
                     if ((item.stage || 0) < EBBINGHAUS_INTERVALS.length) {
@@ -357,41 +402,61 @@
                     }
                 });
                 document.getElementById('dueCount').innerText = dueCardsPool.length;
+            } else {
+                document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
+                document.getElementById('dueCount').innerText = dueCardsPool.length;
             }
             document.getElementById('totalCount').innerText = localVocabDB.length;
             document.getElementById('dbTotalBadge').innerText = `${localVocabDB.length} 条`;
-            renderActiveCard(); renderWholeDatabaseList();
+            renderActiveCard();
+            renderWholeDatabaseList(); 
         }
 
         function startInfiniteReviewMode() {
             if (localVocabDB.length === 0) return;
-            isInfiniteReviewMode = true; dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
-            currentIndex = 0; document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
+            isInfiniteReviewMode = true;
+            dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
             refreshEngineState();
         }
 
         function renderActiveCard() {
-            const emptyState = document.getElementById('emptyState'); const activeCard = document.getElementById('activeCard'); const deleteBtn = document.getElementById('deleteBtn');
+            const emptyState = document.getElementById('emptyState');
+            const activeCard = document.getElementById('activeCard');
+            const deleteBtn = document.getElementById('deleteBtn');
+
             if (dueCardsPool.length === 0) {
                 emptyState.classList.remove('hidden'); activeCard.classList.add('hidden'); deleteBtn.classList.add('hidden');
                 document.getElementById('cardIndexText').innerText = "0 / 0"; return;
             }
-            emptyState.classList.add('hidden'); activeCard.classList.remove('hidden'); deleteBtn.classList.remove('hidden');
-            if (currentIndex >= dueCardsPool.length) { if (isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5); currentIndex = 0; }
+
+            emptyState.classList.add('hidden'); activeCard.classList.remove('hidden'); deleteBtn.classList.remove('hidden'); 
+            if (currentIndex >= dueCardsPool.length) {
+                if (isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+                currentIndex = 0;
+            }
             document.getElementById('cardIndexText').innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
-            const card = dueCardsPool[currentIndex]; document.getElementById('cardLevel').innerText = card.level; document.getElementById('cardWord').innerText = card.word;
+
+            const card = dueCardsPool[currentIndex];
+            document.getElementById('cardLevel').innerText = card.level;
+            document.getElementById('cardWord').innerText = card.word;
             isRevealedStatus = false;
+            
             resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
             resetDOM('cardTranslationContainer', card.translation || '未填写中文翻译', 'text-[#0F172A] text-base font-bold');
             resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
             resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
             resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap');
+
             document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
-            document.getElementById('triggerBtnBox').classList.remove('hidden'); document.getElementById('decisionBox').classList.add('hidden');
+            document.getElementById('triggerBtnBox').classList.remove('hidden');
+            document.getElementById('decisionBox').classList.add('hidden');
         }
 
         function resetDOM(id, text, cls) {
-            const el = document.getElementById(id); if(el) el.innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
+            const el = document.getElementById(id);
+            if(el) el.innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
         }
 
         function revealCard() {
@@ -405,13 +470,26 @@
             if (!isRevealedStatus) return;
             const card = dueCardsPool[currentIndex];
             let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'translation' ? 'cardTranslationContainer' : (key === 'meaning' ? 'cardMeaningContainer' : (key === 'connection' ? 'cardConnectionContainer' : 'cardMemoContainer')));
-            const container = document.getElementById(id); if (container.querySelector('input') || container.querySelector('textarea')) return;
+            
+            const container = document.getElementById(id);
+            if (container.querySelector('input') || container.querySelector('textarea')) return;
+
             let val = card[key] || "";
-            let editEl = (key === 'memo' || key === 'connection' || key === 'meaning') ? `<textarea class="live-edit-input text-xs" rows="4">${val}</textarea>` : `<input type="text" class="live-edit-input" value="${val}" />`;
-            container.innerHTML = editEl; const input = container.children[0]; input.focus();
+            let editEl = (key === 'memo' || key === 'connection' || key === 'meaning') 
+                         ? `<textarea class="live-edit-input text-xs" rows="4">${val}</textarea>` 
+                         : `<input type="text" class="live-edit-input" value="${val}" />`;
+            
+            container.innerHTML = editEl;
+            const input = container.children[0]; input.focus();
+
             input.onblur = function() {
-                const newText = input.value.trim(); const matched = localVocabDB.find(i => i.id === card.id);
-                if (matched) { matched[key] = newText; localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB)); triggerBackgroundPush(); }
+                const newText = input.value.trim();
+                const matched = localVocabDB.find(i => i.id === card.id);
+                if (matched) {
+                    matched[key] = newText;
+                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                    pushToCloud();
+                }
                 card[key] = newText;
                 if (key === 'furigana') { resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif'); }
                 if (key === 'translation') { resetDOM(id, newText || '未填写中文翻译', 'text-[#0F172A] text-base font-bold'); }
@@ -421,23 +499,98 @@
             };
         }
 
+        function handleDecision(yes) {
+            const card = dueCardsPool[currentIndex];
+            const matched = localVocabDB.find(i => i.id === card.id);
+            if (matched) {
+                matched.stage = yes ? (matched.stage || 0) + 1 : 1;
+                matched.lastTime = Date.now();
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                pushToCloud();
+                currentIndex++; refreshEngineState();
+            }
+        }
+
+        function deleteCurrentCard() {
+            const card = dueCardsPool[currentIndex];
+            if (confirm("⚠️ 确定要彻底删除该语法点吗？")) {
+                localVocabDB = localVocabDB.filter(item => item.id !== card.id);
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                pushToCloud();
+                if (currentIndex > 0) currentIndex--; refreshEngineState();
+            }
+        }
+
         function renderWholeDatabaseList() {
-            const container = document.getElementById('databasePanelBody'); container.innerHTML = ""; if (localVocabDB.length === 0) return;
+            const container = document.getElementById('databasePanelBody'); container.innerHTML = "";
+            if (localVocabDB.length === 0) return;
             localVocabDB.forEach((item) => {
-                const cardEl = document.createElement('div'); cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#0F172A] transition-all";
-                let firstLineJa = item.memo ? item.memo.split('\n')[0] : ''; let jaAudioText = (item.word + (firstLineJa ? '。' + firstLineJa : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
-                cardEl.innerHTML = `<div class="space-y-1.5"><div class="flex justify-between items-center"><span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-mono">${item.level}</span><div class="flex gap-2"><button onclick="speakJapanese('${jaAudioText}')" class="text-xs cursor-pointer">🔊</button><button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#0F172A] cursor-pointer">➔</button></div></div><h4 class="font-serif font-bold text-slate-900 text-lg">${item.word}</h4><div class="text-[11px] text-slate-400 font-serif">汉字：<span class="text-slate-700 font-bold">${item.furigana || '无'}</span></div><div class="text-xs text-[#0F172A] font-bold">翻译：<span>${item.translation || '未填写'}</span></div><div class="text-[11px] text-slate-500">解释：<span>${item.meaning || '无'}</span></div><div class="text-[11px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded border border-slate-100 whitespace-pre-wrap">接续：${item.connection || '无'}</div><div class="text-[11px] text-slate-600 italic bg-blue-50/20 p-1.5 rounded border border-blue-50/30 whitespace-pre-wrap">例句与翻译：<br><span class="font-sans">${item.memo || '无'}</span></div></div>`;
+                const cardEl = document.createElement('div');
+                cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#0F172A] transition-all";
+                let firstLineJa = item.memo ? item.memo.split('\n')[0] : '';
+                let jaAudioText = (item.word + (firstLineJa ? '。' + firstLineJa : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
+                cardEl.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center"><span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-mono">${item.level}</span><div class="flex gap-2"><button onclick="speakJapanese('${jaAudioText}')" class="text-xs cursor-pointer">🔊</button><button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#0F172A] cursor-pointer">➔</button></div></div>
+                        <h4 class="font-serif font-bold text-slate-900 text-lg">${item.word}</h4>
+                        <div class="text-[11px] text-slate-400 font-serif">汉字：<span class="text-slate-700 font-bold">${item.furigana || '无'}</span></div>
+                        <div class="text-xs text-[#0F172A] font-bold">翻译：<span>${item.translation || '未填写'}</span></div>
+                        <div class="text-[11px] text-slate-500">解释：<span>${item.meaning || '无'}</span></div>
+                        <div class="text-[11px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded border border-slate-100 whitespace-pre-wrap">接续：${item.connection || '无'}</div>
+                        <div class="text-[11px] text-slate-600 italic bg-blue-50/20 p-1.5 rounded border border-blue-50/30 whitespace-pre-wrap">例句与翻译：<br><span class="font-sans">${item.memo || '无'}</span></div>
+                    </div>`;
                 container.appendChild(cardEl);
             });
         }
 
         function forceFocusCard(id) {
-            const matched = localVocabDB.find(i => i.id === id); if (matched) { isInfiniteReviewMode = true; dueCardsPool = [matched]; currentIndex = 0; refreshEngineState(); window.scrollTo({ top: 100, behavior: 'smooth' }); }
+            const matched = localVocabDB.find(i => i.id === id);
+            if (matched) { isInfiniteReviewMode = true; dueCardsPool = [matched]; currentIndex = 0; refreshEngineState(); window.scrollTo({ top: 100, behavior: 'smooth' }); }
         }
 
         function toggleDatabasePanel() {
             const body = document.getElementById('databasePanelBody'); const arrow = document.getElementById('foldArrow');
-            if (body.classList.contains('hidden')) { body.classList.remove('hidden'); arrow.innerText = "折叠 ➖"; } else { body.classList.add('hidden'); arrow.innerText = "展开 ➕"; }
+            if (body.classList.contains('hidden')) { body.classList.remove('hidden'); arrow.innerText = "折叠 ➖"; } 
+            else { body.classList.add('hidden'); arrow.innerText = "展开 ➕"; }
+        }
+
+        function saveNewVocab() {
+            const word = document.getElementById('vWord').value.trim();
+            const level = document.getElementById('vLevel').value;
+            const furigana = document.getElementById('vFurigana').value.trim();
+            const translation = document.getElementById('vTranslation').value.trim();
+            const meaning = document.getElementById('vMeaning').value.trim();
+            const connection = document.getElementById('vConnection').value.trim();
+            const memo = document.getElementById('vMemo').value.trim();
+            if (!word || !translation) return alert("请检查，日语语法点与中文翻译项为必填项。");
+
+            localVocabDB.push({ id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), word, level, furigana, translation, meaning, connection, memo, stage: 0, lastTime: Date.now() });
+            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+            pushToCloud();
+
+            ['vWord','vFurigana','vTranslation','vMeaning','vConnection','vMemo','vSmartPaste'].forEach(id => document.getElementById(id).value = '');
+            if(isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+            refreshEngineState();
+        }
+
+        function exportBackupData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localVocabDB));
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `文法备份_${Date.now()}.json`); dl.click();
+        }
+
+        function importBackupData(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data)) {
+                        localVocabDB = data; localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                        pushToCloud(); refreshEngineState(); alert("导入成功！已完成云端对齐。");
+                    }
+                } catch(err) { alert("文件解析失败。"); }
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>

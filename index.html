@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
                 <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：换装万能私密云存储总线，彻底根除静态文件拦截，跨端云同步完美通关。</p>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：换装万能私密云存储总线，已加装【云端树洞全自动托管抓取内核】。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -46,7 +46,7 @@
             </div>
             <div>
                 <label class="block font-bold text-slate-700 mb-1">云端数据小树洞 ID (系统全自动托管生成)</label>
-                <input type="text" id="ghGistId" placeholder="首次绑定请留空，系统会自动为你创建" class="w-full p-2 border bg-slate-50/50 text-slate-500" readonly>
+                <input type="text" id="ghGistId" placeholder="首次在新设备绑定请留空，系统会自动逆向抓取" class="w-full p-2 border bg-slate-50/50 text-slate-500" readonly>
             </div>
             <div class="flex gap-2">
                 <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition cursor-pointer">
@@ -127,7 +127,7 @@
                     <span class="text-xs font-black tracking-widest text-[#0F172A] uppercase font-serif" id="cockpitTitle">02 / SELF-CHECK COCKPIT</span>
                     <div class="flex items-center gap-4">
                         <button onclick="deleteCurrentCard()" id="deleteBtn" class="text-[10px] font-bold text-slate-300 hover:text-red-600 transition cursor-pointer hidden">
-                            🗑彻底删除
+                            🗑 彻底删除
                         </button>
                         <span class="text-[10px] font-mono text-gray-400" id="cardIndexText">0 / 0</span>
                     </div>
@@ -173,7 +173,7 @@
                                 </div>
                             </div>
                             <div id="triggerBtnBox" class="text-center py-4">
-                                <button onclick="revealCard()" id="revealBtn" class="w-full md:w-auto px-6 py-2.5 bg-slate-800 text-white font-bold text-xs rounded-full hover:bg-black transition cursor-pointer shadow-sm tracking-wider font-serif">
+                                <button onclick="revealCard()" id="revealBtn" class="w-full md:w-auto px-6 py-2.5 bg-[#0F172A] text-white font-bold text-xs rounded-full hover:bg-black transition cursor-pointer shadow-sm tracking-wider font-serif">
                                     👁 脑补完毕，查看答案
                                 </button>
                             </div>
@@ -183,7 +183,7 @@
                             <button onclick="handleDecision(false)" class="py-3 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold border border-rose-200 hover:bg-rose-100 transition cursor-pointer text-center">
                                 ❌ 没想起来
                             </button>
-                            <button onclick="handleDecision(true)" class="py-3 bg-[#0F172A] text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition cursor-pointer text-center shadow-sm">
+                            <button onclick="handleDecision(true)" class="py-3 bg-[#0F172A] text-white rounded-lg text-xs font-bold hover:bg-black transition cursor-pointer text-center shadow-sm">
                                 ✅ 顺利通过
                             </button>
                         </div>
@@ -229,13 +229,35 @@
             fetchFromCloud(true);
         }
 
+        // 🧠 全自动逆向历史打捞核心
         async function fetchFromCloud(showAlert = false) {
             const token = localStorage.getItem('MZ_GIST_TOKEN');
-            const gistId = localStorage.getItem('MZ_GIST_ID');
+            let gistId = localStorage.getItem('MZ_GIST_ID');
             if(!token) return;
 
+            // 🚀 核心拦截器：若发现用户空降了新设备而没有填 ID，启动红外静默搜索！
             if(!gistId) {
-                if(showAlert) alert("☁️ 正在为您在 GitHub 后台搭建专属的私密云端数据库...");
+                try {
+                    const listRes = await fetch('https://api.github.com/gists', {
+                        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                    });
+                    if(listRes.status === 200) {
+                        const gists = await listRes.json();
+                        // 根据最初生成的描述标签，在账号后台进行高精度匹配
+                        const matchedGist = gists.find(g => g.description && g.description.includes("Private Japanese Grammar Storage Sync"));
+                        if(matchedGist) {
+                            gistId = matchedGist.id;
+                            localStorage.setItem('MZ_GIST_ID', gistId);
+                            document.getElementById('ghGistId').value = gistId;
+                            console.log("🎯 成功逆向定位到历史云端备份档案！");
+                        }
+                    }
+                } catch(err) { console.error("静默打捞异常:", err); }
+            }
+
+            // 如果确实搜了一圈，是完全没有存货的新账号，启动首次正向建档
+            if(!gistId) {
+                if(showAlert) alert("☁️ 正在为您在 GitHub 后台开辟专属私密冷存储树洞...");
                 pushToCloud();
                 return;
             }
@@ -252,14 +274,15 @@
                         localVocabDB = JSON.parse(fileObj.content);
                         localStorage.setItem('MZ_JAP_GRAMMAR_DB', fileObj.content);
                         refreshEngineState();
-                        if(showAlert) alert("☁️ 恭喜！私密云端小树洞连接成功，数据已完美全量对齐！");
+                        if(showAlert) alert("☁️ 恭喜！私密云端题库对齐成功，所有数据完美同步到位！");
                     }
                 } else {
-                    if(showAlert) alert("❌ 连接失败。请核对 Token 钥匙是否有多余空格或漏掉了 gist 权限勾选。");
+                    if(showAlert) alert("❌ 连网握手受阻。请检查您的密钥 Token 是否带有隐藏的多余空格。");
                 }
             } catch(e) { console.error(e); }
         }
 
+        // 🧠 工业级全智能推流总线
         async function pushToCloud() {
             const token = localStorage.getItem('MZ_GIST_TOKEN');
             let gistId = localStorage.getItem('MZ_GIST_ID');
@@ -286,7 +309,7 @@
                     if(!gistId) {
                         localStorage.setItem('MZ_GIST_ID', json.id);
                         document.getElementById('ghGistId').value = json.id;
-                        alert("🎉 专属私密云端数据库已完美开辟！以后手机电脑填入同一串 Token 就能实时自动同步了！");
+                        alert("🎉 专属私密云端数据库已完美开辟！多终端填入同一串 Token 即可自动对齐数据！");
                     }
                     console.log("☁️ 背景静默云同步落地成功。");
                 }

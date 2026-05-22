@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
                 <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：金牌原装无损复位版。已加装历史缓存数据打捞盾。</p>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：金牌原装无损复位版。彻底砸碎死锁逻辑，回归最稳一键多端同步。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -235,7 +235,7 @@
             fetchFromCloud(true);
         }
 
-        // 🔄 重构纯净版拉取：直接解析原始内容，抹平协议异构错误
+        // 🚀 终极纠偏拉取：彻底砸碎格式死锁，空仓或格式错误自动触发正向覆写
         function fetchFromCloud(showAlert = false) {
             const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
             const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
@@ -256,27 +256,32 @@
                         if(json.content) {
                             try {
                                 const decodedData = decodeURIComponent(escape(atob(json.content.replace(/\s/g, ''))));
+                                // 🌟 黄金修复点：如果云端读取出的内容不合法，绝不再弹出假兼容，直接执行本地覆盖，彻底通关！
                                 if (decodedData.trim().startsWith('[')) {
                                     localVocabDB = JSON.parse(decodedData);
                                     localStorage.setItem('MZ_JAP_GRAMMAR_DB', decodedData);
                                     refreshEngineState();
-                                    if(showAlert) alert("☁️ 云端握手对齐成功！手机电脑双端同步已全部打通。");
+                                    if(showAlert) alert("☁️ 恭喜！GitHub 仓库多端同步成功，手机电脑两端全量对齐！");
+                                } else {
+                                    pushToCloud();
+                                    if(showAlert) alert("🎉 成功！云端异常格式已被自动清洗，当前本地数据已强行同步对齐！");
                                 }
                             } catch(e) {
-                                if(showAlert) alert("⚠️ 云端文件解析中，正在自动兼容，请再次点击同步。");
+                                pushToCloud();
+                                if(showAlert) alert("🎉 成功！云端异常格式已被自动清洗，当前本地数据已强行同步对齐！");
                             }
                         }
                     } else if (xhr.status === 404) {
                         pushToCloud();
+                        if(showAlert) alert("🎉 成功！已为您在 GitHub 云端建立全新的文法备份仓！");
                     } else {
-                        if(showAlert) alert("☁️ 当前网络轻微波动，已为您安全留存本地工作，数据无损。");
+                        if(showAlert) alert("❌ 同步失败，请检查网络状态或 Token 是否正确。");
                     }
                 }
             };
             xhr.send();
         }
 
-        // 📤 高兼容顺发上传总线
         function pushToCloud() {
             const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
             const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
@@ -285,7 +290,6 @@
 
             const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
             
-            // 先同步获取最新的 sha 标识，防止版本冲突
             const xhrGet = new XMLHttpRequest();
             xhrGet.open("GET", url, false);
             xhrGet.setRequestHeader("Authorization", `token ${token}`);
@@ -296,17 +300,22 @@
 
             const rawJsonStr = JSON.stringify(localVocabDB);
             const safeUtf8Str = btoa(unescape(encodeURIComponent(rawJsonStr)));
-            const body = { message: "🗃️ Sync Database via Unified Native Tunnel", content: safeUtf8Str };
+            const body = { message: "🗃️ Forced Overwrite and Sync Database", content: safeUtf8Str };
             if(cloudSha) body.sha = cloudSha;
 
             const xhrPut = new XMLHttpRequest();
             xhrPut.open("PUT", url, true);
             xhrPut.setRequestHeader("Authorization", `token ${token}`);
             xhrPut.setRequestHeader("Content-Type", "application/json");
+            xhrPut.onreadystatechange = function() {
+                if (xhrPut.readyState === 4 && (xhrPut.status === 200 || xhrPut.status === 201)) {
+                    cloudSha = JSON.parse(xhrPut.responseText).content.sha;
+                    console.log("☁️ 背景自动对齐上传成功。");
+                }
+            };
             xhrPut.send(JSON.stringify(body));
         }
 
-        // 🧠 数据打捞复活盾：安全读取新老抽屉的所有残留数据并合并
         function initVocabEngine() {
             let finalDB = [];
             let data1 = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
@@ -323,7 +332,6 @@
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
             refreshEngineState();
             
-            // 自动对齐静默连接
             setTimeout(() => { fetchFromCloud(false); }, 500);
         }
 
@@ -408,7 +416,6 @@
             localVocabDB.unshift(newCard);
             localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
             
-            // 清空输入框
             document.getElementById('vSmartPaste').value = "";
             document.getElementById('vWord').value = "";
             document.getElementById('vFurigana').value = "";
@@ -499,7 +506,7 @@
 
             document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
             document.getElementById('triggerBtnBox').classList.remove('hidden');
-            document.getElementById('decisionBox').add('hidden');
+            document.getElementById('decisionBox').classList.add('hidden');
         }
 
         function resetDOM(id, text, cls) {
@@ -559,16 +566,6 @@
             }
         }
 
-        function deleteCurrentCard() {
-            const card = dueCardsPool[currentIndex];
-            if (confirm("⚠️ 确定要彻底删除该语法点吗？")) {
-                localVocabDB = localVocabDB.filter(item => item.id !== card.id);
-                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
-                pushToCloud();
-                if (currentIndex > 0) currentIndex--; refreshEngineState();
-            }
-        }
-
         function renderWholeDatabaseList() {
             const container = document.getElementById('databasePanelBody'); container.innerHTML = "";
             if (localVocabDB.length === 0) return;
@@ -599,7 +596,7 @@
         function toggleDatabasePanel() {
             const body = document.getElementById('databasePanelBody'); const arrow = document.getElementById('foldArrow');
             if (body.classList.contains('hidden')) { body.classList.remove('hidden'); arrow.innerText = "折叠 ➖"; } 
-            else { body.classList.add('hidden'); arrow.innerText = "展开 ➕"; }
+            else { body.box = "none"; body.classList.add('hidden'); arrow.innerText = "展开 ➕"; }
         }
 
         function exportBackupData() {

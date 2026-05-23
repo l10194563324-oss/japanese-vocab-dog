@@ -7,107 +7,562 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: -apple-system, "PingFang SC", "Hiragino Sans", "Yu Gothic", sans-serif; background-color: #F8FAFC; color: #1E293B; }
-        .live-edit-input { border: 1px dashed #0F172A !important; padding: 4px; width: 100%; border-radius: 4px; }
+        input, select, textarea { background-color: #FFFFFF; border: 1px solid #E2E8F0 !important; transition: all 0.15s ease; border-radius: 6px; }
+        input:focus, select:focus, textarea:focus { border-color: #0F172A !important; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05); outline: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* ✏️ 原地快捷修改大文本编辑舱样式 */
+        .live-edit-input { border: 1px dashed #0F172A !important; background-color: #FFF !important; padding: 6px 10px; font-size: inherit; font-family: inherit; width: 100%; border-radius: 6px; color: #0F172A; line-height: 1.6; }
+        .edit-hint { opacity: 0; transition: opacity 0.2s ease; cursor: pointer; }
+        .editable-zone:hover .edit-hint { opacity: 0.6; }
     </style>
 </head>
-<body class="p-4 bg-[#F8FAFC]">
-    <div class="max-w-xl mx-auto space-y-6">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div class="flex justify-between items-center text-xs text-slate-400 font-bold uppercase tracking-widest">
-                <span>02 / MEMORY COCKPIT</span>
-                <button onclick="deleteCurrentCard()" class="text-slate-400 hover:text-red-500">🗑删除此条</button>
+<body class="p-3 md:p-8 min-h-screen flex justify-center items-start bg-[#F8FAFC]">
+
+    <div id="appContainer" class="w-full max-w-7xl flex flex-col gap-6 md:gap-8">
+        
+        <div class="bg-[#0F172A] p-6 md:p-8 rounded-xl shadow-sm text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
+                <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：全功能核心版式无损复位。实装智能乱序拆分、盲盒遮挡、活页题库与统一同步。</p>
             </div>
-            <div class="flex justify-between items-start">
-                <div>
-                    <span id="cardLevel" class="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-mono text-[#0F172A]">N3</span>
-                    <h1 id="cardWord" class="text-3xl font-black pt-2">加载中...</h1>
+            <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
+                <div class="text-center md:text-left">
+                    <span class="block text-[10px] font-black text-rose-300 tracking-wider mb-1 uppercase" id="dueTitle">🚨 今日截止需复习</span>
+                    <span class="text-4xl font-black tracking-tighter text-rose-400" id="dueCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
                 </div>
-                <button onclick="speakJapanese()" class="p-2 border rounded-lg text-xs font-bold">🔊 朗读原音</button>
+                <div class="text-center md:text-left border-l border-slate-800 pl-8">
+                    <span class="block text-[10px] font-black text-sky-300 tracking-wider mb-1 uppercase">📦 语法库总储备</span>
+                    <span class="text-4xl font-black tracking-tighter text-sky-200" id="totalCount">0</span><span class="text-xs font-bold ml-1 text-slate-300">条</span>
+                </div>
             </div>
+        </div>
+
+        <div id="cloudConfigPanel" class="bg-slate-100/80 border border-slate-200 p-4 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 text-xs items-end">
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">GitHub 用户名</label>
+                <input type="text" id="ghUser" value="l10194563324-oss" class="w-full p-2 border">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">仓库名称</label>
+                <input type="text" id="ghRepo" value="japanese-vocab-dog" class="w-full p-2 border">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">GitHub Token (钥匙)</label>
+                <input type="password" id="ghToken" placeholder="贴入 ghp_ 开头的Token" class="w-full p-2 border">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-[#0F172A] text-white font-bold rounded-lg hover:bg-slate-800 transition cursor-pointer">
+                    💾 绑定并云同步
+                </button>
+                <button onclick="fetchFromCloud(true)" class="py-2 px-3 bg-slate-600 text-white font-bold rounded-lg hover:bg-slate-700 cursor-pointer" title="从云端拉取最新数据">
+                    🔄 拉取
+                </button>
+            </div>
+        </div>
+
+        <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
             
-            <div class="bg-slate-50 p-4 rounded-xl space-y-3 text-sm">
-                <div>汉字标记：<span id="cardFurigana" class="font-bold"></span></div>
-                <div>中文翻译：<span id="cardTranslation" class="font-bold text-[#0F172A]"></span></div>
-                <div>功能解释：<span id="cardMeaning" class="text-slate-600"></span></div>
-                <div>接续规则：<div id="cardConnection" class="text-xs bg-white p-2 mt-1 border rounded"></div></div>
-                <div>听抄例句：<div id="cardMemo" class="text-xs bg-white p-2 mt-1 border rounded"></div></div>
+            <div class="lg:col-span-5 flex flex-col gap-6 order-2 lg:order-1">
+                <div class="bg-white p-5 md:p-6 rounded-xl border border-slate-200/60 shadow-xs space-y-4">
+                    <span class="text-xs font-black tracking-widest text-[#0F172A] uppercase block border-b border-slate-100 pb-2 font-serif">01 / SMART INPUT FLOW</span>
+                    
+                    <div class="bg-slate-50/80 p-3 rounded-lg border border-slate-200 space-y-1.5">
+                        <label class="block text-[11px] font-black text-[#0F172A]">✨ 自由乱序输入/粘贴框</label>
+                        <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把你听抄的那 6 行文字一整块扔在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="w-full border-t border-slate-100 my-2"></div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">日文语法点/词汇</label>
+                            <input type="text" id="vWord" class="w-full p-2.5 rounded-lg text-xs font-bold text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">级别</label>
+                            <select id="vLevel" class="w-full p-2.5 rounded-lg text-xs font-bold text-slate-700">
+                                <option value="N2">N2 核心</option><option value="N3" selected>N3 核心</option><option value="N4">N4 基础</option><option value="N5">N5 基础</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">日文汉字标记</label>
+                        <input type="text" id="vFurigana" class="w-full p-2.5 rounded-lg text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">中文翻译</label>
+                        <input type="text" id="vTranslation" class="w-full p-2.5 rounded-lg text-xs font-bold text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">中文语法功能解释</label>
+                        <input type="text" id="vMeaning" class="w-full p-2.5 rounded-lg text-xs text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">接续规则 (支持自动多行换行)</label>
+                        <textarea id="vConnection" rows="3" class="w-full p-2.5 rounded-lg text-xs text-slate-600 leading-relaxed"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">听抄日文例句/场景备注</label>
+                        <textarea id="vMemo" rows="3" class="w-full p-2.5 rounded-lg text-xs text-slate-700 leading-relaxed font-sans"></textarea>
+                    </div>
+                    <button onclick="saveNewVocab()" class="w-full text-xs font-black tracking-widest py-3 bg-[#0F172A] hover:bg-slate-800 text-white rounded-lg transition cursor-pointer shadow-sm">
+                        📥 安全存入自查文法库
+                    </button>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200/60 shadow-xs text-xs space-y-3">
+                    <span class="text-xs font-black tracking-widest text-slate-400 uppercase block font-serif">DATA PROTECTION</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportBackupData()" class="p-2 border border-dashed border-slate-300 rounded-lg text-center font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                            📤 备份导出文法库
+                        </button>
+                        <label class="p-2 border border-dashed border-slate-300 rounded-lg text-center font-bold text-slate-600 hover:bg-slate-50 cursor-pointer block">
+                            📥 导入恢复文法库
+                            <input type="file" id="importFile" class="hidden" onchange="importBackupData(this)">
+                        </label>
+                    </div>
+                </div>
             </div>
 
-            <div id="decisionBox" class="grid grid-cols-2 gap-4">
-                <button onclick="handleDecision(false)" class="py-3 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold">❌ 没想起来 (重置)</button>
-                <button onclick="handleDecision(true)" class="py-3 bg-[#0F172A] text-white rounded-lg text-xs font-bold">✅ 顺利通过 (晋级)</button>
+            <div class="lg:col-span-7 bg-white p-5 md:p-6 rounded-xl border border-slate-200/60 shadow-xs flex flex-col min-h-[480px] md:min-h-[540px] order-1 lg:order-2">
+                <div class="border-b border-slate-100 pb-3 mb-6 flex justify-between items-center">
+                    <span class="text-xs font-black tracking-widest text-[#0F172A] uppercase font-serif" id="cockpitTitle">02 / SELF-CHECK COCKPIT</span>
+                    <div class="flex items-center gap-4">
+                        <button onclick="deleteCurrentCard()" id="deleteBtn" class="text-[10px] font-bold text-slate-300 hover:text-red-600 transition cursor-pointer hidden">
+                            🗑 彻底删除此条
+                        </button>
+                        <span class="text-[10px] font-mono text-gray-400" id="cardIndexText">0 / 0</span>
+                    </div>
+                </div>
+
+                <div id="cardCockpit" class="flex-1 flex flex-col justify-between space-y-8">
+                    <div id="emptyState" class="text-center py-16 flex flex-col items-center justify-center space-y-4 hidden">
+                        <span class="text-xs italic text-slate-400">🎉 所有复习任务已全部通关清零！</span>
+                        <button onclick="startInfiniteReviewMode()" class="px-6 py-3 bg-[#0F172A] text-white hover:bg-slate-800 font-bold text-xs rounded-xl shadow-md transition cursor-pointer flex items-center gap-2">
+                            🔄 开启无限自由复习 / 再次学习
+                        </button>
+                    </div>
+
+                    <div id="activeCard" class="space-y-6 flex-1 flex flex-col justify-between hidden">
+                        <div class="space-y-2 flex justify-between items-start">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <span id="cardLevel" class="inline-block text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-[#0F172A] rounded font-mono">N3</span>
+                                <h1 id="cardWord" class="text-3xl md:text-4xl font-black font-serif tracking-wide text-slate-900 pt-2 break-words">加载中...</h1>
+                            </div>
+                            <button onclick="speakJapanese()" class="p-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold text-slate-700 cursor-pointer transition shadow-sm flex items-center gap-1.5 shrink-0">
+                                🔊 朗读原音
+                            </button>
+                        </div>
+
+                        <div id="hiddenZone" class="bg-slate-50/50 border border-slate-100 p-4 md:p-5 rounded-xl space-y-3 opacity-100 transition-opacity">
+                            <div class="blur-md pointer-events-none select-none transition-all duration-300" id="blurWrapper">
+                                <div class="text-xs text-slate-400 editable-zone py-1 flex items-center" onclick="makeEditable('furigana')">
+                                    汉字标记：<span id="cardFuriganaContainer" class="inline-block ml-1 flex-1 font-serif text-sm text-slate-800 font-bold"></span>
+                                </div>
+                                <div class="text-xs text-slate-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('translation')">
+                                    中文翻译：<span id="cardTranslationContainer" class="inline-block ml-1 flex-1 text-base text-[#0F172A] font-bold"></span>
+                                </div>
+                                <div class="text-xs text-slate-400 editable-zone py-1 flex items-center mt-1" onclick="makeEditable('meaning')">
+                                    功能解释：<span id="cardMeaningContainer" class="inline-block ml-1 flex-1 text-xs text-slate-600 leading-relaxed"></span>
+                                </div>
+                                <div class="text-xs text-slate-400 editable-zone py-1 mt-1 block" onclick="makeEditable('connection')">
+                                    接续规则：
+                                    <div id="cardConnectionContainer" class="text-slate-700 text-xs font-mono bg-white p-2 rounded border border-slate-200/40 mt-1 leading-relaxed whitespace-pre-wrap min-h-[32px]"></div>
+                                </div>
+                                <div class="text-xs text-slate-400 editable-zone py-1 mt-2 border-t border-slate-200/60 pt-2" onclick="makeEditable('memo')">
+                                    听抄例句与翻译：
+                                    <div id="cardMemoContainer" class="text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap min-h-[48px] bg-white p-2 rounded border border-slate-200/40"></div>
+                                </div>
+                            </div>
+                            <div id="triggerBtnBox" class="text-center py-4">
+                                <button onclick="revealCard()" id="revealBtn" class="w-full md:w-auto px-6 py-2.5 bg-[#0F172A] text-white font-bold text-xs rounded-full hover:bg-black transition cursor-pointer shadow-sm tracking-wider font-serif">
+                                    👁 脑补完毕，查看答案
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="decisionBox" class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 hidden">
+                            <button onclick="handleDecision(false)" class="py-3 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold border border-rose-200 hover:bg-rose-100 transition cursor-pointer text-center">
+                                ❌ 没想起来 (重置)
+                            </button>
+                            <button onclick="handleDecision(true)" class="py-3 bg-[#0F172A] text-white rounded-lg text-xs font-bold hover:bg-black transition cursor-pointer text-center shadow-sm">
+                                ✅ 顺利通过 (晋级)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="w-full bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden mt-2">
+            <div class="bg-slate-50 px-5 py-4 flex justify-between items-center border-b border-slate-200 cursor-pointer" onclick="toggleDatabasePanel()">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-black text-[#0F172A] uppercase tracking-wider font-serif">📚 WHOLE GRAMMAR DATABASE</span>
+                    <span class="text-[10px] bg-slate-200 text-[#0F172A] font-bold px-2 py-0.5 rounded-full font-mono" id="dbTotalBadge">0 条</span>
+                </div>
+                <span id="foldArrow" class="text-xs font-bold text-slate-400">展开 ➕</span>
+            </div>
+            <div id="databasePanelBody" class="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden max-h-[600px] overflow-y-auto no-scrollbar bg-slate-50/50">
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-            <span class="text-xs font-black text-slate-400 uppercase tracking-widest">01 / SMART INPUT FLOW</span>
-            <textarea id="vSmartPaste" rows="3" oninput="handleSmartSplit()" class="w-full p-3 border rounded-lg text-xs" placeholder="在此粘贴听抄文字..."></textarea>
-            <button onclick="saveNewVocab()" class="w-full py-3 bg-[#0F172A] text-white rounded-lg text-xs font-bold">📤 安全存入并同步</button>
-        </div>
     </div>
 
     <script>
-        let localDB = JSON.parse(localStorage.getItem('MZ_JAP_GRAMMAR_DB') || '[]');
-        let currentIndex = 0;
+        const EBBINGHAUS_INTERVALS = [0, 1, 24, 72, 168, 360];
+        let localVocabDB = []; let dueCardsPool = []; let currentIndex = 0; let isRevealedStatus = false;
+        let isInfiniteReviewMode = false;
+        let cloudSha = null;
 
-        window.onload = () => { refresh(); fetchFromCloud(); };
+        window.onload = function() {
+            loadCloudConfigFromLocal();
+            initVocabEngine();
+        };
 
-        function refresh() {
-            if(localDB.length === 0) { document.getElementById('cardWord').innerText = "暂无数据"; return; }
-            const card = localDB[currentIndex];
+        function loadCloudConfigFromLocal() {
+            document.getElementById('ghUser').value = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            document.getElementById('ghRepo').value = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
+            document.getElementById('ghToken').value = localStorage.getItem('MZ_GH_TOKEN') || '';
+        }
+
+        function saveCloudConfig() {
+            localStorage.setItem('MZ_GH_USER', document.getElementById('ghUser').value.trim());
+            localStorage.setItem('MZ_GH_REPO', document.getElementById('ghRepo').value.trim());
+            localStorage.setItem('MZ_GH_TOKEN', document.getElementById('ghToken').value.trim());
+            fetchFromCloud(true);
+        }
+
+        // 🔄 纯净原生高可靠云端拉取线
+        function fetchFromCloud(showAlert = false) {
+            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
+            const token = document.getElementById('ghToken').value.trim() || localStorage.getItem('MZ_GH_TOKEN');
+            if(!user || !token) return;
+
+            const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.setRequestHeader("Authorization", `token ${token}`);
+            xhr.setRequestHeader("Accept", "application/vnd.github.v3+json");
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200 || xhr.status === 201) {
+                        const json = JSON.parse(xhr.responseText);
+                        cloudSha = json.sha;
+                        if(json.content) {
+                            try {
+                                const decodedData = decodeURIComponent(escape(atob(json.content.replace(/\s/g, ''))));
+                                if (decodedData.trim().startsWith('[')) {
+                                    localVocabDB = JSON.parse(decodedData);
+                                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', decodedData);
+                                    refreshEngineState();
+                                    if(showAlert) alert("☁️ 恭喜！云端题库对齐成功，手机电脑数据完美同步到位！");
+                                }
+                            } catch(e) { console.error(e); }
+                        }
+                    } else if (xhr.status === 404) {
+                        pushToCloud();
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        // 📤 高容错顺发覆写上传总线
+        function pushToCloud() {
+            const user = localStorage.getItem('MZ_GH_USER') || 'l10194563324-oss';
+            const repo = localStorage.getItem('MZ_GH_REPO') || 'japanese-vocab-dog';
+            const token = localStorage.getItem('MZ_GH_TOKEN');
+            if(!user || !token) return;
+
+            const url = `https://api.github.com/repos/${user}/${repo}/contents/database.json`;
+            
+            const xhrGet = new XMLHttpRequest();
+            xhrGet.open("GET", url, false);
+            xhrGet.setRequestHeader("Authorization", `token ${token}`);
+            try {
+                xhrGet.send();
+                if(xhrGet.status === 200) { cloudSha = JSON.parse(xhrGet.responseText).sha; }
+            } catch(e) {}
+
+            const rawJsonStr = JSON.stringify(localVocabDB);
+            const safeUtf8Str = btoa(unescape(encodeURIComponent(rawJsonStr)));
+            const body = { message: "🗃️ Forced Synchronize Mesh", content: safeUtf8Str };
+            if(cloudSha) body.sha = cloudSha;
+
+            const xhrPut = new XMLHttpRequest();
+            xhrPut.open("PUT", url, true);
+            xhrPut.setRequestHeader("Authorization", `token ${token}`);
+            xhrPut.setRequestHeader("Content-Type", "application/json");
+            xhrPut.onreadystatechange = function() {
+                if (xhrPut.readyState === 4 && (xhrPut.status === 200 || xhrPut.status === 201)) {
+                    cloudSha = JSON.parse(xhrPut.responseText).content.sha;
+                    console.log("☁️ 背景云端数据对齐同步成功。");
+                }
+            };
+            xhrPut.send(JSON.stringify(body));
+        }
+
+        // 🧠 历史数据多层抽屉无损复活打捞盾
+        function initVocabEngine() {
+            let finalDB = [];
+            let data1 = localStorage.getItem('MZ_JAP_GRAMMAR_DB');
+            let data2 = localStorage.getItem('MZ_JAP_VOCAB_DB');
+            let data3 = localStorage.getItem('MZ_JAP_VOCAB_DB_TEMP');
+
+            if (data1) { try { finalDB = JSON.parse(data1); } catch(e){} }
+            if ((!Array.isArray(finalDB) || finalDB.length === 0) && data2) { try { finalDB = JSON.parse(data2); } catch(e){} }
+            if ((!Array.isArray(finalDB) || finalDB.length === 0) && data3) { try { finalDB = JSON.parse(data3); } catch(e){} }
+
+            localVocabDB = Array.isArray(finalDB) ? finalDB : [];
+            localVocabDB = localVocabDB.filter(item => item && item.word);
+
+            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+            refreshEngineState();
+            
+            setTimeout(() => { fetchFromCloud(false); }, 500);
+        }
+
+        // 📝 6行乱序听抄乱序特征全自动识别分流算法
+        function handleSmartSplit() {
+            const rawText = document.getElementById('vSmartPaste').value;
+            if (!rawText.trim()) return;
+
+            let chunks = rawText.split('\n').map(c => c.trim()).filter(c => c.length > 0);
+            if (chunks.length <= 1) chunks = rawText.split(/[\uff0c,；;／\/|\t]/).map(c => c.trim()).filter(c => c.length > 0);
+            if (chunks.length === 0) return;
+
+            let dWord = "", dFurigana = "", dTranslation = "", dMeaning = "", dMemo = [];
+            let dConnection = "";
+
+            const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+            const hasChinese = /[\u4e00-\u9fa5]/;
+
+            if (chunks.length >= 4) {
+                let lastIdx = chunks.length - 1;
+                let prevLastIdx = chunks.length - 2;
+                
+                dMemo.push(chunks[prevLastIdx]);
+                dMemo.push(chunks[lastIdx]);
+
+                let remainingChunks = chunks.slice(0, prevLastIdx);
+                
+                remainingChunks.forEach((chunk) => {
+                    if (chunk.includes('+') || chunk.includes('＋') || chunk.includes('名') || chunk.includes('形') || chunk.includes('简体') || chunk.includes('词干') || chunk.includes('て形')) {
+                        dConnection = chunk; return;
+                    }
+                    if (hasJapanese.test(chunk) && chunk.length <= 12) {
+                        if (!dWord) { dWord = chunk; return; }
+                        if (dWord && !dFurigana) { dFurigana = chunk; return; }
+                    }
+                    if (hasChinese.test(chunk) && chunk.length <= 10) {
+                        if (!dTranslation) { dTranslation = chunk; return; }
+                    }
+                    if (hasChinese.test(chunk) && chunk.length > 10) {
+                        if (!dMeaning) { dMeaning = chunk; return; }
+                    }
+                });
+
+                if (!dWord && remainingChunks[0]) dWord = remainingChunks[0];
+                if (!dTranslation && remainingChunks[1]) dTranslation = remainingChunks[1];
+            } else {
+                chunks.forEach((chunk) => {
+                    if (hasJapanese.test(chunk) && (chunk.includes('。') || chunk.includes('、') || chunk.length > 12)) { dMemo.push(chunk); return; }
+                    if (hasJapanese.test(chunk) && chunk.length <= 12) {
+                        if (!dWord) { dWord = chunk; return; }
+                        if (dWord && !dFurigana) { dFurigana = chunk; return; }
+                    }
+                    if (hasChinese.test(chunk) && chunk.length <= 10) { if (!dTranslation) { dTranslation = chunk; return; } }
+                    if (hasChinese.test(chunk) && chunk.length > 10) { if (!dMeaning) { dMeaning = chunk; return; } }
+                });
+            }
+
+            document.getElementById('vWord').value = dWord;
+            document.getElementById('vFurigana').value = dFurigana;
+            document.getElementById('vTranslation').value = dTranslation;
+            document.getElementById('vMeaning').value = dMeaning;
+            document.getElementById('vConnection').value = dConnection;
+            if (dMemo.length > 0) document.getElementById('vMemo').value = dMemo.join('\n');
+        }
+
+        function speakJapanese(customText) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); 
+
+            let textToSpeak = customText || document.getElementById('cardWord').innerText;
+            if (!customText && isRevealedStatus) {
+                const card = dueCardsPool[currentIndex];
+                if(card && card.memo) textToSpeak += "。 " + card.memo.split('\n')[0];
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.82; 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function refreshEngineState() {
+            const now = Date.now();
+            if (!isInfiniteReviewMode) {
+                document.getElementById('dueTitle').innerText = "🚨 今日截止需复习";
+                dueCardsPool = [];
+                localVocabDB.forEach(item => {
+                    const hoursPassed = (now - item.lastTime) / (1000 * 60 * 60);
+                    if ((item.stage || 0) < EBBINGHAUS_INTERVALS.length) {
+                        if (hoursPassed >= EBBINGHAUS_INTERVALS[item.stage || 0]) dueCardsPool.push(item);
+                    }
+                });
+                document.getElementById('dueCount').innerText = dueCardsPool.length;
+            } else {
+                document.getElementById('dueTitle').innerText = "🔄 自由刷题再练模式中";
+                document.getElementById('dueCount').innerText = dueCardsPool.length;
+            }
+            document.getElementById('totalCount').innerText = localVocabDB.length;
+            document.getElementById('dbTotalBadge').innerText = `${localVocabDB.length} 条`;
+            renderActiveCard();
+            renderWholeDatabaseList(); 
+        }
+
+        function startInfiniteReviewMode() {
+            if (localVocabDB.length === 0) return;
+            isInfiniteReviewMode = true;
+            dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            refreshEngineState();
+        }
+
+        function renderActiveCard() {
+            const emptyState = document.getElementById('emptyState');
+            const activeCard = document.getElementById('activeCard');
+            const deleteBtn = document.getElementById('deleteBtn');
+
+            if (dueCardsPool.length === 0) {
+                emptyState.classList.remove('hidden'); activeCard.classList.add('hidden'); deleteBtn.classList.add('hidden');
+                document.getElementById('cardIndexText').innerText = "0 / 0"; return;
+            }
+
+            emptyState.classList.add('hidden'); activeCard.classList.remove('hidden'); deleteBtn.classList.remove('hidden'); 
+            if (currentIndex >= dueCardsPool.length) {
+                if (isInfiniteReviewMode) dueCardsPool = [...localVocabDB].sort(() => Math.random() - 0.5);
+                currentIndex = 0;
+            }
+            document.getElementById('cardIndexText').innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
+
+            const card = dueCardsPool[currentIndex];
             document.getElementById('cardLevel').innerText = card.level;
             document.getElementById('cardWord').innerText = card.word;
-            document.getElementById('cardFurigana').innerText = card.furigana;
-            document.getElementById('cardTranslation').innerText = card.translation;
-            document.getElementById('cardMeaning').innerText = card.meaning;
-            document.getElementById('cardConnection').innerText = card.connection;
-            document.getElementById('cardMemo').innerText = card.memo;
+            isRevealedStatus = false;
+            
+            resetDOM('cardFuriganaContainer', card.furigana || '无', 'text-slate-800 text-sm font-bold font-serif');
+            resetDOM('cardTranslationContainer', card.translation || '未填写中文翻译', 'text-[#0F172A] text-base font-bold');
+            resetDOM('cardMeaningContainer', card.meaning || '暂无详细功能解释。', 'text-slate-500 text-xs');
+            resetDOM('cardConnectionContainer', card.connection || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap');
+            resetDOM('cardMemoContainer', card.memo || '暂无详细笔记。', 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap');
+
+            document.getElementById('blurWrapper').className = "blur-md pointer-events-none select-none transition-all duration-300";
+            document.getElementById('triggerBtnBox').classList.remove('hidden');
+            document.getElementById('decisionBox').classList.add('hidden');
+        }
+
+        function resetDOM(id, text, cls) {
+            const el = document.getElementById(id);
+            if(el) el.innerHTML = `<span class="${cls}">${text}</span> <span class="edit-hint text-[10px] text-blue-600 pl-1">✏️</span>`;
+        }
+
+        function revealCard() {
+            document.getElementById('blurWrapper').className = "transition-all duration-300";
+            document.getElementById('triggerBtnBox').classList.add('hidden');
+            document.getElementById('decisionBox').className = "grid grid-cols-2 gap-4 pt-4 border-t border-slate-100";
+            isRevealedStatus = true;
+        }
+
+        function makeEditable(key) {
+            if (!isRevealedStatus) return;
+            const card = dueCardsPool[currentIndex];
+            let id = key === 'furigana' ? 'cardFuriganaContainer' : (key === 'translation' ? 'cardTranslationContainer' : (key === 'meaning' ? 'cardMeaningContainer' : (key === 'connection' ? 'cardConnectionContainer' : 'cardMemoContainer')));
+            
+            const container = document.getElementById(id);
+            if (container.querySelector('input') || container.querySelector('textarea')) return;
+
+            let val = card[key] || "";
+            let editEl = (key === 'memo' || key === 'connection' || key === 'meaning') 
+                         ? `<textarea class="live-edit-input text-xs" rows="4">${val}</textarea>` 
+                         : `<input type="text" class="live-edit-input" value="${val}" />`;
+            
+            container.innerHTML = editEl;
+            const input = container.children[0]; input.focus();
+
+            input.onblur = function() {
+                const newText = input.value.trim();
+                const matched = localVocabDB.find(i => i.id === card.id);
+                if (matched) {
+                    matched[key] = newText;
+                    localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                    pushToCloud();
+                }
+                card[key] = newText;
+                if (key === 'furigana') { resetDOM(id, newText || '无', 'text-slate-800 text-sm font-bold font-serif'); }
+                if (key === 'translation') { resetDOM(id, newText || '未填写中文翻译', 'text-[#0F172A] text-base font-bold'); }
+                if (key === 'meaning') { resetDOM(id, newText || '暂无详细功能解释。', 'text-slate-500 text-xs'); }
+                if (key === 'connection') { resetDOM(id, newText || '暂无接续规则配置。', 'text-slate-700 text-xs font-mono whitespace-pre-wrap'); }
+                if (key === 'memo') { resetDOM(id, newText || '暂无详细笔记。', 'text-slate-700 font-sans mt-1 text-xs leading-relaxed whitespace-pre-wrap'); }
+            };
         }
 
         function handleDecision(yes) {
-            // 逻辑处理后自动同步
-            currentIndex = (currentIndex + 1) % localDB.length;
-            refresh();
-            pushToCloud();
+            const card = dueCardsPool[currentIndex];
+            const matched = localVocabDB.find(i => i.id === card.id);
+            if (matched) {
+                matched.stage = yes ? (matched.stage || 0) + 1 : 1;
+                matched.lastTime = Date.now();
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                pushToCloud();
+                currentIndex++; refreshEngineState();
+            }
         }
 
         function deleteCurrentCard() {
-            if(!confirm("确定删除吗？")) return;
-            localDB.splice(currentIndex, 1);
-            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localDB));
-            currentIndex = 0;
-            refresh();
-            pushToCloud();
+            const card = dueCardsPool[currentIndex];
+            if (confirm("⚠️ 确定要彻底删除该语法点吗？")) {
+                localVocabDB = localVocabDB.filter(item => item.id !== card.id);
+                localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localVocabDB));
+                pushToCloud();
+                if (currentIndex > 0) currentIndex--; refreshEngineState();
+            }
         }
 
-        function saveNewVocab() {
-            const card = {
-                id: 'v_'+Date.now(),
-                word: document.getElementById('vWord')?.value || "新词",
-                level: document.getElementById('vLevel')?.value || "N3",
-                furigana: document.getElementById('vFurigana')?.value || "",
-                translation: document.getElementById('vTranslation')?.value || "",
-                meaning: document.getElementById('vMeaning')?.value || "",
-                connection: document.getElementById('vConnection')?.value || "",
-                memo: document.getElementById('vMemo')?.value || ""
-            };
-            localDB.unshift(card);
-            localStorage.setItem('MZ_JAP_GRAMMAR_DB', JSON.stringify(localDB));
-            refresh();
-            pushToCloud();
+        // 📚 活页题库数据库深度重构渲染
+        function renderWholeDatabaseList() {
+            const container = document.getElementById('databasePanelBody'); container.innerHTML = "";
+            if (localVocabDB.length === 0) return;
+            localVocabDB.forEach((item) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 relative hover:border-[#0F172A] transition-all";
+                let firstLineJa = item.memo ? item.memo.split('\n')[0] : '';
+                let jaAudioText = (item.word + (firstLineJa ? '。' + firstLineJa : '')).replace(/[\r\n]/g, " ").replace(/'/g, "\\'");
+                cardEl.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center"><span class="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-mono">${item.level}</span><div class="flex gap-2"><button onclick="speakJapanese('${jaAudioText}')" class="text-xs cursor-pointer">🔊</button><button onclick="forceFocusCard('${item.id}')" class="text-xs text-slate-300 hover:text-[#0F172A] cursor-pointer">➔</button></div></div>
+                        <h4 class="font-serif font-bold text-slate-900 text-lg">${item.word}</h4>
+                        <div class="text-[11px] text-slate-400 font-serif">汉字：<span class="text-slate-700 font-bold">${item.furigana || '无'}</span></div>
+                        <div class="text-xs text-[#0F172A] font-bold">翻译：<span>${item.translation || '未填写'}</span></div>
+                        <div class="text-[11px] text-slate-500">解释：<span>${item.meaning || '无'}</span></div>
+                        <div class="text-[11px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded border border-slate-100 whitespace-pre-wrap">接续：${item.connection || '无'}</div>
+                        <div class="text-[11px] text-slate-600 italic bg-blue-50/20 p-1.5 rounded border border-blue-50/30 whitespace-pre-wrap">例句与翻译：<br><span class="font-sans">${item.memo || '无'}</span></div>
+                    </div>`;
+                container.appendChild(cardEl);
+            });
         }
 
-        // 同步逻辑 (保持连接)
-        function fetchFromCloud() {
-            // 这里放你那套确认好用的 XHR 同步代码
+        function forceFocusCard(id) {
+            const matched = localVocabDB.find(i => i.id === id);
+            if (matched) { isInfiniteReviewMode = true; dueCardsPool = [matched]; currentIndex = 0; refreshEngineState(); window.scrollTo({ top: 100, behavior: 'smooth' }); }
         }
-        function pushToCloud() {
-            // 这里放你那套确认好用的 XHR 同步代码
-        }
-        function speakJapanese() {
-            const u = new SpeechSynthesisUtterance(localDB[currentIndex].word);
-            u.lang = 'ja-JP'; window.speechSynthesis.speak(u);
-        }
-    </script>
-</body>
-</html>
+
+        function toggleDatabasePanel() {
+            const body = document.getElementById('databasePanelBody'); const arrow = document.getElementById('foldArrow');
+            if (body.classList.contains('hidden')) { body.classList.remove('hidden'); arrow.innerText = "

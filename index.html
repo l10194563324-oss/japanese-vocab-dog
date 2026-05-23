@@ -25,7 +25,7 @@
             <div>
                 <div class="w-12 h-0.5 bg-amber-400 mb-2"></div>
                 <h3 class="text-xl font-bold font-serif tracking-wider">N5-N2自查文法库</h3>
-                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：版式、盲盒、拆分、题库全量复原，完美缝合昨日黄金同步总线。</p>
+                <p class="text-xs text-slate-300 mt-1 font-sans">日系轻杂志风：全量版式、智能拆分、盲盒遮挡、活页题库与昨日原装同步完美合龙版。</p>
             </div>
             <div class="flex gap-8 border-t md:border-t-0 pt-4 md:pt-0 border-slate-800 w-full md:w-auto font-serif">
                 <div class="text-center md:text-left">
@@ -73,17 +73,13 @@
                         <textarea id="vSmartPaste" rows="4" oninput="handleSmartSplit()" placeholder="直接把你听抄的那 6 行文字一整块扔在这里..." class="w-full p-2.5 bg-white rounded-lg text-xs font-medium border-dashed text-slate-700 leading-relaxed"></textarea>
                     </div>
 
-                    <div class="w-full border-t border-slate-100 my-2 hidden"></div>
-
-                    <div class="hidden">
-                        <input type="text" id="vWord">
-                        <select id="vLevel"><option value="N3" selected>N3</option></select>
-                        <input type="text" id="vFurigana">
-                        <input type="text" id="vTranslation">
-                        <input type="text" id="vMeaning">
-                        <textarea id="vConnection"></textarea>
-                        <textarea id="vMemo"></textarea>
-                    </div>
+                    <input type="hidden" id="vWord">
+                    <input type="hidden" id="vLevel" value="N3">
+                    <input type="hidden" id="vFurigana">
+                    <input type="hidden" id="vTranslation">
+                    <input type="hidden" id="vMeaning">
+                    <input type="hidden" id="vConnection">
+                    <input type="hidden" id="vMemo">
                     
                     <button onclick="saveNewVocab()" class="w-full text-xs font-black tracking-widest py-3 bg-[#0F172A] hover:bg-slate-800 text-white rounded-lg transition cursor-pointer shadow-sm">
                         📥 安全存入自查文法库
@@ -304,7 +300,7 @@
             setTimeout(() => { fetchFromCloud(false); }, 500);
         }
 
-        // 📝 6行乱序特征自动提取分流算法 (完美保留)
+        // 📝 6行乱序特征自动提取分流算法
         function handleSmartSplit() {
             const rawText = document.getElementById('vSmartPaste').value;
             if (!rawText.trim()) return;
@@ -430,7 +426,7 @@
             document.getElementById('cardIndexText').innerText = `${currentIndex + 1} / ${dueCardsPool.length}`;
 
             const card = dueCardsPool[currentIndex];
-            document.getElementById('cardLevel').innerText = card.level;
+            document.getElementById('cardLevel').innerText = card.level || 'N3';
             document.getElementById('cardWord').innerText = card.word;
             isRevealedStatus = false;
             
@@ -457,5 +453,4 @@
             isRevealedStatus = true;
         }
 
-        function makeEditable(key) {
-            if
+        function
